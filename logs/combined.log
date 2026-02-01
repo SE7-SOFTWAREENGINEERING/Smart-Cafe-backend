@@ -1,0 +1,63 @@
+{"level":"error","message":"Error connecting to MongoDB: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you're trying to access the database from an IP that isn't whitelisted. Make sure your current IP address is on your Atlas cluster's IP whitelist: https://www.mongodb.com/docs/atlas/security-whitelist/","service":"smart-mess-api","timestamp":"2026-02-01 12:08:24"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.8oxpb.mongodb.net","service":"smart-mess-api","timestamp":"2026-02-01 12:10:33"}
+{"level":"info","message":"Database: test","service":"smart-mess-api","timestamp":"2026-02-01 12:10:33"}
+{"level":"info","message":"Starting database seeding...","service":"smart-mess-api","timestamp":"2026-02-01 12:10:33"}
+{"level":"info","message":"Creating roles...","service":"smart-mess-api","timestamp":"2026-02-01 12:10:33"}
+{"level":"info","message":"✅ Created 4 roles","service":"smart-mess-api","timestamp":"2026-02-01 12:10:34"}
+{"level":"info","message":"Creating admin user...","service":"smart-mess-api","timestamp":"2026-02-01 12:10:34"}
+{"level":"info","message":"✅ Created admin user (email: admin@smartmess.com, password: admin123)","service":"smart-mess-api","timestamp":"2026-02-01 12:10:35"}
+{"level":"info","message":"Creating sample student...","service":"smart-mess-api","timestamp":"2026-02-01 12:10:35"}
+{"level":"info","message":"✅ Created sample student (email: student@smartmess.com, password: student123)","service":"smart-mess-api","timestamp":"2026-02-01 12:10:35"}
+{"level":"info","message":"Creating sample staff...","service":"smart-mess-api","timestamp":"2026-02-01 12:10:35"}
+{"level":"info","message":"✅ Created sample staff (email: staff@smartmess.com, password: staff123)","service":"smart-mess-api","timestamp":"2026-02-01 12:10:35"}
+{"level":"info","message":"Creating system settings...","service":"smart-mess-api","timestamp":"2026-02-01 12:10:35"}
+{"level":"info","message":"✅ Created 7 system settings","service":"smart-mess-api","timestamp":"2026-02-01 12:10:35"}
+{"level":"info","message":"🚀 Server running on port 6500","service":"smart-mess-api","timestamp":"2026-02-01 12:11:33"}
+{"level":"info","message":"📍 Environment: development","service":"smart-mess-api","timestamp":"2026-02-01 12:11:33"}
+{"level":"info","message":"📍 Health check: http://localhost:6500/health","service":"smart-mess-api","timestamp":"2026-02-01 12:11:33"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.8oxpb.mongodb.net","service":"smart-mess-api","timestamp":"2026-02-01 12:11:36"}
+{"level":"info","message":"Database: test","service":"smart-mess-api","timestamp":"2026-02-01 12:11:36"}
+{"ip":"::1","level":"info","message":"GET /health","service":"smart-mess-api","timestamp":"2026-02-01 12:12:03","userAgent":"curl/8.17.0"}
+{"ip":"::1","level":"info","message":"GET /health","service":"smart-mess-api","timestamp":"2026-02-01 12:33:08","userAgent":"PostmanRuntime/7.51.1"}
+{"ip":"::1","level":"info","message":"POST /api/auth/register","service":"smart-mess-api","timestamp":"2026-02-01 12:36:16","userAgent":"PostmanRuntime/7.51.1"}
+{"level":"info","message":"User registered: test6500@example.com","service":"smart-mess-api","timestamp":"2026-02-01 12:36:16"}
+{"ip":"::1","level":"info","message":"POST /api/slots/","service":"smart-mess-api","timestamp":"2026-02-01 12:43:53","userAgent":"PostmanRuntime/7.51.1"}
+{"ip":"::1","level":"info","message":"POST /api/slots/","service":"smart-mess-api","timestamp":"2026-02-01 12:45:04","userAgent":"PostmanRuntime/7.51.1"}
+{"ip":"::1","level":"info","message":"POST /api/slots/","service":"smart-mess-api","timestamp":"2026-02-01 12:46:52","userAgent":"PostmanRuntime/7.51.1"}
+{"level":"warn","message":"Access denied for user 697f8f10549bacb0d48afb29 with roles STUDENT. Required: MANAGER, ADMIN","service":"smart-mess-api","timestamp":"2026-02-01 12:46:52"}
+{"ip":"::1","level":"info","message":"POST /api/auth/login","service":"smart-mess-api","timestamp":"2026-02-01 12:49:42","userAgent":"PostmanRuntime/7.51.1"}
+{"ip":"::1","level":"info","message":"POST /api/auth/register","service":"smart-mess-api","timestamp":"2026-02-01 12:52:18","userAgent":"PostmanRuntime/7.51.1"}
+{"level":"info","message":"User registered: admin2@smartmess.com","service":"smart-mess-api","timestamp":"2026-02-01 12:52:18"}
+{"ip":"::1","level":"info","message":"POST /api/slots/","service":"smart-mess-api","timestamp":"2026-02-01 12:53:00","userAgent":"PostmanRuntime/7.51.1"}
+{"level":"warn","message":"Access denied for user 697f92d2549bacb0d48afb36 with roles STUDENT. Required: MANAGER, ADMIN","service":"smart-mess-api","timestamp":"2026-02-01 12:53:00"}
+{"ip":"::1","level":"info","message":"POST /api/auth/login","service":"smart-mess-api","timestamp":"2026-02-01 12:57:43","userAgent":"PostmanRuntime/7.51.1"}
+{"level":"info","message":"SIGINT received, shutting down gracefully","service":"smart-mess-api","timestamp":"2026-02-01 13:04:05"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-02.8oxpb.mongodb.net","service":"smart-mess-api","timestamp":"2026-02-01 13:19:47"}
+{"level":"info","message":"Database: test","service":"smart-mess-api","timestamp":"2026-02-01 13:19:47"}
+{"level":"info","message":"Starting database seeding...","service":"smart-mess-api","timestamp":"2026-02-01 13:19:47"}
+{"level":"info","message":"Creating roles...","service":"smart-mess-api","timestamp":"2026-02-01 13:19:47"}
+{"level":"info","message":"✅ Created 4 roles","service":"smart-mess-api","timestamp":"2026-02-01 13:19:48"}
+{"level":"info","message":"Creating admin user...","service":"smart-mess-api","timestamp":"2026-02-01 13:19:48"}
+{"level":"info","message":"✅ Created admin user (email: admin@smartmess.com, password: admin123)","service":"smart-mess-api","timestamp":"2026-02-01 13:19:48"}
+{"level":"info","message":"Creating sample student...","service":"smart-mess-api","timestamp":"2026-02-01 13:19:48"}
+{"level":"info","message":"✅ Created sample student (email: student@smartmess.com, password: student123)","service":"smart-mess-api","timestamp":"2026-02-01 13:19:48"}
+{"level":"info","message":"Creating sample staff...","service":"smart-mess-api","timestamp":"2026-02-01 13:19:48"}
+{"level":"info","message":"✅ Created sample staff (email: staff@smartmess.com, password: staff123)","service":"smart-mess-api","timestamp":"2026-02-01 13:19:49"}
+{"level":"info","message":"Creating system settings...","service":"smart-mess-api","timestamp":"2026-02-01 13:19:49"}
+{"level":"info","message":"✅ Created 7 system settings","service":"smart-mess-api","timestamp":"2026-02-01 13:19:49"}
+{"level":"info","message":"🚀 Server running on port 6500","service":"smart-mess-api","timestamp":"2026-02-01 13:19:52"}
+{"level":"info","message":"📍 Environment: development","service":"smart-mess-api","timestamp":"2026-02-01 13:19:52"}
+{"level":"info","message":"📍 Health check: http://localhost:6500/health","service":"smart-mess-api","timestamp":"2026-02-01 13:19:52"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.8oxpb.mongodb.net","service":"smart-mess-api","timestamp":"2026-02-01 13:19:52"}
+{"level":"info","message":"Database: test","service":"smart-mess-api","timestamp":"2026-02-01 13:19:52"}
+{"ip":"::1","level":"info","message":"POST /api/auth/login","service":"smart-mess-api","timestamp":"2026-02-01 13:20:33","userAgent":"PostmanRuntime/7.51.1"}
+{"level":"info","message":"User logged in: admin@smartmess.com","service":"smart-mess-api","timestamp":"2026-02-01 13:20:33"}
+{"ip":"::1","level":"info","message":"POST /api/slots/","service":"smart-mess-api","timestamp":"2026-02-01 13:22:26","userAgent":"PostmanRuntime/7.51.1"}
+{"level":"warn","message":"Validation failed: [{\"field\":\"menuId\",\"message\":\"Valid menu ID is required\"},{\"field\":\"slots\",\"message\":\"At least one slot is required\"}]","service":"smart-mess-api","timestamp":"2026-02-01 13:22:26"}
+{"ip":"::1","level":"info","message":"POST /api/menus/","service":"smart-mess-api","timestamp":"2026-02-01 13:34:03","userAgent":"PostmanRuntime/7.51.1"}
+{"ip":"::1","level":"info","message":"POST /api/slots/","service":"smart-mess-api","timestamp":"2026-02-01 13:34:10","userAgent":"PostmanRuntime/7.51.1"}
+{"level":"info","message":"Created 1 meal slots for menu 697f9c8780ffaf0ffd824801","service":"smart-mess-api","timestamp":"2026-02-01 13:34:10"}
+{"ip":"::1","level":"info","message":"POST /api/auth/login","service":"smart-mess-api","timestamp":"2026-02-01 13:35:15","userAgent":"PostmanRuntime/7.51.1"}
+{"level":"info","message":"User logged in: student@smartmess.com","service":"smart-mess-api","timestamp":"2026-02-01 13:35:15"}
+{"ip":"::1","level":"info","message":"POST /api/bookings/","service":"smart-mess-api","timestamp":"2026-02-01 13:37:27","userAgent":"PostmanRuntime/7.51.1"}
+{"body":{"bookingDate":"2026-02-02","mealSlotId":"697f9ca284ba0a478554ac61"},"level":"error","message":"Error: Token validation failed: tokenCode: Path `tokenCode` is required.","method":"POST","path":"/api/bookings/","service":"smart-mess-api","stack":"ValidationError: Token validation failed: tokenCode: Path `tokenCode` is required.\n    at Document.invalidate (/Users/admin/Desktop/se-backend/node_modules/mongoose/lib/document.js:3381:32)\n    at /Users/admin/Desktop/se-backend/node_modules/mongoose/lib/document.js:3142:17\n    at /Users/admin/Desktop/se-backend/node_modules/mongoose/lib/schemaType.js:1446:9\n    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)","timestamp":"2026-02-01 13:37:28","user":"697f9944c96b948a6421ae5a"}
