@@ -78,3 +78,5 @@
 {"level":"info","message":"Database: test","service":"smart-mess-api","timestamp":"2026-02-01 13:56:19"}
 {"ip":"::1","level":"info","message":"POST /api/bookings/","service":"smart-mess-api","timestamp":"2026-02-01 13:56:27","userAgent":"PostmanRuntime/7.51.1"}
 {"level":"info","message":"Booking created: 697fa1dba3bcace1994eab08 for user 697f9944c96b948a6421ae5a","service":"smart-mess-api","timestamp":"2026-02-01 13:56:28"}
+{"level":"warn","message":"MongoDB disconnected. Attempting to reconnect...","service":"smart-mess-api","timestamp":"2026-02-01 14:03:26"}
+{"level":"info","message":"MongoDB reconnected","service":"smart-mess-api","timestamp":"2026-02-01 14:03:26"}
