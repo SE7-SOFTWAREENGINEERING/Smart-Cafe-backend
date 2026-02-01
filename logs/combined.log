@@ -61,3 +61,20 @@
 {"level":"info","message":"User logged in: student@smartmess.com","service":"smart-mess-api","timestamp":"2026-02-01 13:35:15"}
 {"ip":"::1","level":"info","message":"POST /api/bookings/","service":"smart-mess-api","timestamp":"2026-02-01 13:37:27","userAgent":"PostmanRuntime/7.51.1"}
 {"body":{"bookingDate":"2026-02-02","mealSlotId":"697f9ca284ba0a478554ac61"},"level":"error","message":"Error: Token validation failed: tokenCode: Path `tokenCode` is required.","method":"POST","path":"/api/bookings/","service":"smart-mess-api","stack":"ValidationError: Token validation failed: tokenCode: Path `tokenCode` is required.\n    at Document.invalidate (/Users/admin/Desktop/se-backend/node_modules/mongoose/lib/document.js:3381:32)\n    at /Users/admin/Desktop/se-backend/node_modules/mongoose/lib/document.js:3142:17\n    at /Users/admin/Desktop/se-backend/node_modules/mongoose/lib/schemaType.js:1446:9\n    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)","timestamp":"2026-02-01 13:37:28","user":"697f9944c96b948a6421ae5a"}
+{"level":"info","message":"🚀 Server running on port 6500","service":"smart-mess-api","timestamp":"2026-02-01 13:46:55"}
+{"level":"info","message":"📍 Environment: development","service":"smart-mess-api","timestamp":"2026-02-01 13:46:55"}
+{"level":"info","message":"📍 Health check: http://localhost:6500/health","service":"smart-mess-api","timestamp":"2026-02-01 13:46:55"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-00.8oxpb.mongodb.net","service":"smart-mess-api","timestamp":"2026-02-01 13:46:56"}
+{"level":"info","message":"Database: test","service":"smart-mess-api","timestamp":"2026-02-01 13:46:56"}
+{"ip":"::1","level":"info","message":"POST /api/bookings/","service":"smart-mess-api","timestamp":"2026-02-01 13:49:52","userAgent":"PostmanRuntime/7.51.1"}
+{"ip":"::1","level":"info","message":"POST /api/bookings/","service":"smart-mess-api","timestamp":"2026-02-01 13:50:05","userAgent":"PostmanRuntime/7.51.1"}
+{"body":{"bookingDate":"2026-02-03","mealSlotId":"697f9ca284ba0a478554ac61"},"level":"error","message":"Error: Token validation failed: tokenCode: Path `tokenCode` is required.","method":"POST","path":"/api/bookings/","service":"smart-mess-api","stack":"ValidationError: Token validation failed: tokenCode: Path `tokenCode` is required.\n    at Document.invalidate (/Users/admin/Desktop/se-backend/node_modules/mongoose/lib/document.js:3381:32)\n    at /Users/admin/Desktop/se-backend/node_modules/mongoose/lib/document.js:3142:17\n    at /Users/admin/Desktop/se-backend/node_modules/mongoose/lib/schemaType.js:1446:9\n    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)","timestamp":"2026-02-01 13:50:05","user":"697f9944c96b948a6421ae5a"}
+{"ip":"::1","level":"info","message":"POST /api/bookings/","service":"smart-mess-api","timestamp":"2026-02-01 13:50:17","userAgent":"PostmanRuntime/7.51.1"}
+{"level":"info","message":"SIGINT received, shutting down gracefully","service":"smart-mess-api","timestamp":"2026-02-01 13:56:16"}
+{"level":"info","message":"🚀 Server running on port 6500","service":"smart-mess-api","timestamp":"2026-02-01 13:56:18"}
+{"level":"info","message":"📍 Environment: development","service":"smart-mess-api","timestamp":"2026-02-01 13:56:18"}
+{"level":"info","message":"📍 Health check: http://localhost:6500/health","service":"smart-mess-api","timestamp":"2026-02-01 13:56:18"}
+{"level":"info","message":"MongoDB Connected: cluster0-shard-00-01.8oxpb.mongodb.net","service":"smart-mess-api","timestamp":"2026-02-01 13:56:19"}
+{"level":"info","message":"Database: test","service":"smart-mess-api","timestamp":"2026-02-01 13:56:19"}
+{"ip":"::1","level":"info","message":"POST /api/bookings/","service":"smart-mess-api","timestamp":"2026-02-01 13:56:27","userAgent":"PostmanRuntime/7.51.1"}
+{"level":"info","message":"Booking created: 697fa1dba3bcace1994eab08 for user 697f9944c96b948a6421ae5a","service":"smart-mess-api","timestamp":"2026-02-01 13:56:28"}

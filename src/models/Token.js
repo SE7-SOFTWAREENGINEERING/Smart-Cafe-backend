@@ -11,7 +11,6 @@ const tokenSchema = new mongoose.Schema(
     },
     tokenCode: {
       type: String,
-      required: true,
       unique: true,
       index: true
     },
