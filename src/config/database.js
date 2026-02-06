@@ -1,51 +1,34 @@
 const mongoose = require('mongoose');
-const logger = require('./logger');
+require('dotenv').config();
 
 const connectDB = async () => {
   try {
-    const options = {
-      maxPoolSize: 10,
-      minPoolSize: 5,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      family: 4,
-      retryWrites: true,
-      w: 'majority'
-    };
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      // These options are now default in Mongoose 6+, but included for clarity
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
 
-    const conn = await mongoose.connect(process.env.MONGODB_URI, options);
-
-    logger.info(`MongoDB Connected: ${conn.connection.host}`);
-    logger.info(`Database: ${conn.connection.name}`);
-
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    
     // Handle connection events
     mongoose.connection.on('error', (err) => {
-      logger.error(`MongoDB connection error: ${err}`);
+      console.error('MongoDB connection error:', err);
     });
 
     mongoose.connection.on('disconnected', () => {
-      logger.warn('MongoDB disconnected. Attempting to reconnect...');
-    });
-
-    mongoose.connection.on('reconnected', () => {
-      logger.info('MongoDB reconnected');
+      console.log('MongoDB disconnected');
     });
 
     // Graceful shutdown
     process.on('SIGINT', async () => {
-      try {
-        await mongoose.connection.close();
-        logger.info('MongoDB connection closed through app termination');
-        process.exit(0);
-      } catch (err) {
-        logger.error(`Error during graceful shutdown: ${err}`);
-        process.exit(1);
-      }
+      await mongoose.connection.close();
+      console.log('MongoDB connection closed through app termination');
+      process.exit(0);
     });
 
-    return conn;
   } catch (error) {
-    logger.error(`Error connecting to MongoDB: ${error.message}`);
+    console.error(`❌ Error connecting to MongoDB: ${error.message}`);
     process.exit(1);
   }
 };
