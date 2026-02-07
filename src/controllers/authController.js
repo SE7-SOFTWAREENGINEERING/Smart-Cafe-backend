@@ -6,9 +6,9 @@ const authController = {
   // Register a new user
   register: async (req, res, next) => {
     try {
-      const { name, email, password, role = 'Student' } = req.body;
+      const { fullName, email, password, role = 'User' } = req.body;
 
-      // Check if user already exists
+      // Check if user already exists (one email = one account)
       const existingUser = await User.findOne({ email });
 
       if (existingUser) {
@@ -32,7 +32,7 @@ const authController = {
       // Create user
       const user = await User.create({
         user_id: nextId,
-        name,
+        name: fullName,
         email,
         password: passwordHash,
         role
@@ -46,7 +46,7 @@ const authController = {
           role: user.role 
         },
         process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN }
+        { expiresIn: process.env.JWT_EXPIRE || '24h' }
       );
 
       res.status(201).json({
@@ -100,7 +100,7 @@ const authController = {
           role: user.role 
         },
         process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN }
+        { expiresIn: process.env.JWT_EXPIRE || '24h' }
       );
 
       res.json({
@@ -146,6 +146,103 @@ const authController = {
     } catch (error) {
       next(error);
     }
+  },
+
+  // -------------------------------------------------------------------------
+  // New OTP & Password Reset Logic
+  // -------------------------------------------------------------------------
+
+  sendOtp: async (req, res, next) => {
+    try {
+      const { email } = req.body;
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Save hashed OTP to DB (simple assignment for now, hash in prod)
+      user.otp = otp;
+      user.otp_expires = Date.now() + 10 * 60 * 1000; // 10 mins
+      await user.save();
+
+      // Send Email
+      const sendEmail = require('../utils/emailService');
+      const message = `Your Password Reset OTP is: ${otp}. It expires in 10 minutes.`;
+      
+      try {
+        await sendEmail({
+             email: user.email,
+             subject: 'Smart Cafe - Password Reset OTP',
+             message: message,
+             html: `<p>Your Password Reset OTP is: <strong>${otp}</strong></p><p>It expires in 10 minutes.</p>`
+        });
+
+        res.json({ success: true, message: 'OTP sent to email' });
+      } catch (err) {
+        user.otp = undefined;
+        user.otp_expires = undefined;
+        await user.save();
+        return res.status(500).json({ success: false, message: 'Email could not be sent' });
+      }
+
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  verifyOtp: async (req, res, next) => {
+     try {
+         const { email, otp } = req.body;
+         const user = await User.findOne({ 
+             email, 
+             otp,
+             otp_expires: { $gt: Date.now() } 
+         });
+
+         if (!user) {
+             return res.status(400).json({ success: false, message: 'Invalid or Expired OTP' });
+         }
+
+         // Mark verify logic if needed, or just return success token for reset
+         // For Reset Password flow, we typically return a temp token or just allow next step.
+         // Here we'll just confirm validity.
+         
+         res.json({ success: true, message: 'OTP Verified' });
+
+     } catch (error) {
+         next(error);
+     }
+  },
+
+  resetPassword: async (req, res, next) => {
+      try {
+          const { email, otp, password } = req.body;
+          
+          const user = await User.findOne({ 
+             email, 
+             otp,
+             otp_expires: { $gt: Date.now() } 
+          });
+
+          if (!user) {
+             return res.status(400).json({ success: false, message: 'Invalid or Expired OTP' });
+          }
+
+          // Update Password
+          user.password = await bcrypt.hash(password, 10);
+          user.otp = undefined;
+          user.otp_expires = undefined;
+          await user.save();
+
+          res.json({ success: true, message: 'Password Reset Successful' });
+
+      } catch (error) {
+          next(error);
+      }
   }
 };
 

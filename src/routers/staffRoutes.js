@@ -4,9 +4,9 @@ const staffController = require('../controllers/staffController');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 const { validateRequest, schemas } = require('../middleware/validation');
 
-// All routes require staff authentication
+// All routes require canteen staff authentication
 router.use(authenticateToken);
-router.use(authorizeRoles('Staff', 'Manager', 'Admin'));
+router.use(authorizeRoles('CanteenStaff', 'Manager', 'Admin'));
 
 // Token scanning
 router.post('/scan-token', staffController.scanToken);

@@ -51,6 +51,51 @@ router.post(
 );
 
 /**
+ * @route   POST /api/auth/send-otp
+ * @desc    Send OTP to email for password reset
+ * @access  Public
+ */
+router.post(
+  '/send-otp',
+  [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required')
+  ],
+  validate,
+  authController.sendOtp
+);
+
+/**
+ * @route   POST /api/auth/verify-otp
+ * @desc    Verify OTP
+ * @access  Public
+ */
+router.post(
+  '/verify-otp',
+  [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits')
+  ],
+  validate,
+  authController.verifyOtp
+);
+
+/**
+ * @route   POST /api/auth/reset-password
+ * @desc    Reset password
+ * @access  Public
+ */
+router.post(
+  '/reset-password',
+  [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+  ],
+  validate,
+  authController.resetPassword
+);
+
+/**
  * @route   POST /api/auth/logout
  * @desc    Logout user
  * @access  Private

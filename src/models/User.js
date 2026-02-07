@@ -21,11 +21,23 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  otp: {
+    type: String,
+    default: null
+  },
+  otp_expires: {
+    type: Date,
+    default: null
+  },
+  is_verified: {
+    type: Boolean,
+    default: false
+  },
   role: {
     type: String,
     required: true,
-    enum: ['Student', 'Staff', 'Manager', 'Admin'],
-    default: 'Student'
+    enum: ['User', 'CanteenStaff', 'Manager', 'Admin'],
+    default: 'User'
   },
   created_at: {
     type: Date,

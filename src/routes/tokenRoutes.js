@@ -7,12 +7,12 @@ const { authenticate, authorize, validate } = require('../middleware');
 /**
  * @route   POST /api/tokens/validate
  * @desc    Validate and scan token
- * @access  Private (STAFF)
+ * @access  Private (CANTEEN_STAFF)
  */
 router.post(
   '/validate',
   authenticate,
-  authorize(['STAFF', 'MANAGER', 'ADMIN']),
+  authorize(['CANTEEN_STAFF', 'MANAGER', 'ADMIN']),
   [
     body('tokenCode').notEmpty().withMessage('Token code is required')
   ],

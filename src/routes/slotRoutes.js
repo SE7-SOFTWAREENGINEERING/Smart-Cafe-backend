@@ -27,12 +27,12 @@ router.post(
 /**
  * @route   GET /api/slots/available
  * @desc    Get available slots for a specific date and meal type
- * @access  Private (STUDENT, STAFF, MANAGER, ADMIN)
+ * @access  Private (USER, CANTEEN_STAFF, MANAGER, ADMIN)
  */
 router.get(
   '/available',
   authenticate,
-  authorize(['STUDENT', 'STAFF', 'MANAGER', 'ADMIN']),
+  authorize(['USER', 'CANTEEN_STAFF', 'MANAGER', 'ADMIN']),
   [
     query('date').notEmpty().isISO8601().withMessage('Valid date is required'),
     query('mealType').notEmpty().isIn(['BREAKFAST', 'LUNCH', 'DINNER']).withMessage('Valid meal type is required')
@@ -44,12 +44,12 @@ router.get(
 /**
  * @route   GET /api/slots/live-capacity
  * @desc    Get live capacity view for all active slots
- * @access  Private (STAFF, MANAGER, ADMIN)
+ * @access  Private (CANTEEN_STAFF, MANAGER, ADMIN)
  */
 router.get(
   '/live-capacity',
   authenticate,
-  authorize(['STAFF', 'MANAGER', 'ADMIN']),
+  authorize(['CANTEEN_STAFF', 'MANAGER', 'ADMIN']),
   [
     query('date').optional().isISO8601(),
     query('mealType').optional().isIn(['BREAKFAST', 'LUNCH', 'DINNER'])
@@ -109,12 +109,12 @@ router.put(
 /**
  * @route   GET /api/slots/:slotId/logs
  * @desc    Get slot capacity logs
- * @access  Private (STAFF, MANAGER, ADMIN)
+ * @access  Private (CANTEEN_STAFF, MANAGER, ADMIN)
  */
 router.get(
   '/:slotId/logs',
   authenticate,
-  authorize(['STAFF', 'MANAGER', 'ADMIN']),
+  authorize(['CANTEEN_STAFF', 'MANAGER', 'ADMIN']),
   [
     param('slotId').isMongoId().withMessage('Valid slot ID is required'),
     query('limit').optional().isInt({ min: 1, max: 200 })

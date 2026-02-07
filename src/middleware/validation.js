@@ -10,6 +10,9 @@ const validateRequest = (schema) => {
         message: detail.message
       }));
       
+      console.log('Validation Error:', JSON.stringify(errors, null, 2));
+      console.log('Request Body:', req.body);
+      
       return res.status(400).json({
         success: false,
         message: 'Validation error',
@@ -24,15 +27,30 @@ const validateRequest = (schema) => {
 // Validation schemas
 const schemas = {
   register: Joi.object({
-    name: Joi.string().min(2).max(100).required(),
+    fullName: Joi.string().min(2).max(100).required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
-    role: Joi.string().valid('Student', 'Staff', 'Manager', 'Admin').default('Student')
+    role: Joi.string().valid('User', 'CanteenStaff', 'Manager', 'Admin').default('User')
   }),
 
   login: Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().required()
+  }),
+
+  sendOtp: Joi.object({
+    email: Joi.string().email().required()
+  }),
+
+  verifyOtp: Joi.object({
+    email: Joi.string().email().required(),
+    otp: Joi.string().length(6).pattern(/^\d+$/).required()
+  }),
+
+  resetPassword: Joi.object({
+    email: Joi.string().email().required(),
+    otp: Joi.string().length(6).pattern(/^\d+$/).required(),
+    password: Joi.string().min(6).required()
   }),
 
   booking: Joi.object({
@@ -75,7 +93,7 @@ const schemas = {
   }),
 
   updateRole: Joi.object({
-    role: Joi.string().valid('Student', 'Staff', 'Manager', 'Admin').required(),
+    role: Joi.string().valid('User', 'CanteenStaff', 'Manager', 'Admin').required(),
     is_priority: Joi.boolean()
   })
 };

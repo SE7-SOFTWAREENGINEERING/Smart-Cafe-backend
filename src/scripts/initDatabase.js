@@ -26,7 +26,7 @@ const initDatabase = async () => {
     // Create ENUM types
     console.log('Creating ENUM types...');
     await client.query(`
-      CREATE TYPE user_role AS ENUM ('Student', 'Staff', 'Manager', 'Admin');
+      CREATE TYPE user_role AS ENUM ('User', 'CanteenStaff', 'Manager', 'Admin');
       CREATE TYPE booking_status AS ENUM ('Booked', 'Cancelled', 'Completed', 'NoShow');
       CREATE TYPE token_status AS ENUM ('Active', 'Expired', 'Used');
       CREATE TYPE notification_type AS ENUM ('Reminder', 'Alert', 'Announcement');
@@ -41,7 +41,7 @@ const initDatabase = async () => {
         name VARCHAR(100) NOT NULL,
         email VARCHAR(150) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
-        role user_role NOT NULL DEFAULT 'Student',
+        role user_role NOT NULL DEFAULT 'User',
         is_priority BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -18,13 +18,13 @@ const seedDatabase = async () => {
     logger.info("Creating roles...");
     const roles = [
       {
-        roleName: "STUDENT",
-        description: "Student role - can book meals and view menus",
+        roleName: "USER",
+        description: "User role - can book meals and view menus",
         permissions: ["VIEW_MENU", "BOOK_MEAL", "CANCEL_BOOKING"],
       },
       {
-        roleName: "STAFF",
-        description: "Staff role - can scan tokens and view capacity",
+        roleName: "CANTEEN_STAFF",
+        description: "Canteen staff role - can scan tokens and view capacity",
         permissions: ["SCAN_TOKEN", "VIEW_CAPACITY", "VIEW_MENU"],
       },
       {
@@ -90,58 +90,58 @@ const seedDatabase = async () => {
       "✅ Created admin user (email: admin@smartmess.com, password: admin123)",
     );
 
-    // 3. Create Sample Student
-    logger.info("Creating sample student...");
-    const studentRole = await Role.findOne({ roleName: "STUDENT" });
+    // 3. Create Sample User
+    logger.info("Creating sample user...");
+    const userRole = await Role.findOne({ roleName: "USER" });
 
-    let studentUser = await User.findOne({ email: "student@smartmess.com" });
+    let sampleUser = await User.findOne({ email: "user@smartmess.com" });
 
-    if (!studentUser) {
-      studentUser = new User({
+    if (!sampleUser) {
+      sampleUser = new User({
         fullName: "John Doe",
-        email: "student@smartmess.com",
-        passwordHash: "student123",
-        rollOrEmployeeId: "STU001",
+        email: "user@smartmess.com",
+        passwordHash: "user123",
+        rollOrEmployeeId: "USR001",
         isActive: true,
       });
 
-      await studentUser.save();
+      await sampleUser.save();
     }
 
     await UserRole.findOneAndUpdate(
-      { userId: studentUser._id, roleId: studentRole._id },
-      { userId: studentUser._id, roleId: studentRole._id },
+      { userId: sampleUser._id, roleId: userRole._id },
+      { userId: sampleUser._id, roleId: userRole._id },
       { upsert: true },
     );
     logger.info(
-      "✅ Created sample student (email: student@smartmess.com, password: student123)",
+      "✅ Created sample user (email: user@smartmess.com, password: user123)",
     );
 
-    // 4. Create Sample Staff
-    logger.info("Creating sample staff...");
-    const staffRole = await Role.findOne({ roleName: "STAFF" });
+    // 4. Create Sample Canteen Staff
+    logger.info("Creating sample canteen staff...");
+    const canteenStaffRole = await Role.findOne({ roleName: "CANTEEN_STAFF" });
 
-    let staffUser = await User.findOne({ email: "staff@smartmess.com" });
+    let canteenStaffUser = await User.findOne({ email: "canteenstaff@smartmess.com" });
 
-    if (!staffUser) {
-      staffUser = new User({
+    if (!canteenStaffUser) {
+      canteenStaffUser = new User({
         fullName: "Jane Smith",
-        email: "staff@smartmess.com",
-        passwordHash: "staff123",
-        rollOrEmployeeId: "STAFF001",
+        email: "canteenstaff@smartmess.com",
+        passwordHash: "canteenstaff123",
+        rollOrEmployeeId: "CSTAFF001",
         isActive: true,
       });
 
-      await staffUser.save();
+      await canteenStaffUser.save();
     }
 
     await UserRole.findOneAndUpdate(
-      { userId: staffUser._id, roleId: staffRole._id },
-      { userId: staffUser._id, roleId: staffRole._id },
+      { userId: canteenStaffUser._id, roleId: canteenStaffRole._id },
+      { userId: canteenStaffUser._id, roleId: canteenStaffRole._id },
       { upsert: true },
     );
     logger.info(
-      "✅ Created sample staff (email: staff@smartmess.com, password: staff123)",
+      "✅ Created sample canteen staff (email: canteenstaff@smartmess.com, password: canteenstaff123)",
     );
 
     // 5. Create System Settings
@@ -218,8 +218,8 @@ const seedDatabase = async () => {
     logger.info("✅ Database seeding completed successfully!");
     logger.info("\n📝 Default Credentials:");
     logger.info("   Admin: admin@smartmess.com / admin123");
-    logger.info("   Student: student@smartmess.com / student123");
-    logger.info("   Staff: staff@smartmess.com / staff123\n");
+    logger.info("   User: user@smartmess.com / user123");
+    logger.info("   Canteen Staff: canteenstaff@smartmess.com / canteenstaff123\n");
 
     process.exit(0);
   } catch (error) {

@@ -7,12 +7,12 @@ const { authenticate, authorize, validate } = require('../middleware');
 /**
  * @route   POST /api/bookings
  * @desc    Create a new booking
- * @access  Private (STUDENT)
+ * @access  Private (USER)
  */
 router.post(
   '/',
   authenticate,
-  authorize(['STUDENT']),
+  authorize(['USER']),
   [
     body('mealSlotId').isMongoId().withMessage('Valid meal slot ID is required'),
     body('bookingDate').isISO8601().withMessage('Valid booking date is required')
@@ -24,12 +24,12 @@ router.post(
 /**
  * @route   GET /api/bookings/user/:userId
  * @desc    Get user's bookings
- * @access  Private (STUDENT, STAFF, MANAGER, ADMIN)
+ * @access  Private (USER, CANTEEN_STAFF, MANAGER, ADMIN)
  */
 router.get(
   '/user/:userId?',
   authenticate,
-  authorize(['STUDENT', 'STAFF', 'MANAGER', 'ADMIN']),
+  authorize(['USER', 'CANTEEN_STAFF', 'MANAGER', 'ADMIN']),
   [
     param('userId').optional().isMongoId().withMessage('Valid user ID is required'),
     query('status').optional().isIn(['BOOKED', 'CANCELLED', 'CONSUMED', 'NO_SHOW']),
@@ -58,12 +58,12 @@ router.get(
 /**
  * @route   PUT /api/bookings/:bookingId/cancel
  * @desc    Cancel a booking
- * @access  Private (STUDENT, ADMIN)
+ * @access  Private (USER, ADMIN)
  */
 router.put(
   '/:bookingId/cancel',
   authenticate,
-  authorize(['STUDENT', 'ADMIN']),
+  authorize(['USER', 'ADMIN']),
   [
     param('bookingId').isMongoId().withMessage('Valid booking ID is required'),
     body('reason').optional().trim()
@@ -75,12 +75,12 @@ router.put(
 /**
  * @route   PUT /api/bookings/:bookingId/reschedule
  * @desc    Reschedule a booking
- * @access  Private (STUDENT)
+ * @access  Private (USER)
  */
 router.put(
   '/:bookingId/reschedule',
   authenticate,
-  authorize(['STUDENT']),
+  authorize(['USER']),
   [
     param('bookingId').isMongoId().withMessage('Valid booking ID is required'),
     body('newMealSlotId').isMongoId().withMessage('Valid new meal slot ID is required'),

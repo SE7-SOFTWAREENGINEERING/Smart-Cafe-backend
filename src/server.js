@@ -14,7 +14,13 @@ connectDB();
 
 // Import routes
 // Import routes
+// Import routes
 const authRoutes = require('./routers/authRoutes');
+const menuRoutes = require('./routers/menuRoutes');
+const systemRoutes = require('./routers/systemRoutes');
+
+// ...
+
 const bookingRoutes = require('./routers/bookingRoutes');
 const staffRoutes = require('./routers/staffRoutes');
 const adminRoutes = require('./routers/adminRoutes');
@@ -62,6 +68,8 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/menu', menuRoutes);
+app.use('/api/system', systemRoutes);
 
 // 404 handler
 app.use(notFound);

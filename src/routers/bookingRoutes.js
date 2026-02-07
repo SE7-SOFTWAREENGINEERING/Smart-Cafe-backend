@@ -7,9 +7,9 @@ const { validateRequest, schemas } = require('../middleware/validation');
 // All routes require authentication
 router.use(authenticateToken);
 
-// Student routes
+// User routes
 router.post('/', 
-  authorizeRoles('Student', 'Admin'),
+  authorizeRoles('User', 'Admin'),
   validateRequest(schemas.booking), 
   bookingController.createBooking
 );
@@ -21,7 +21,7 @@ router.get('/available-slots', bookingController.getAvailableSlots);
 router.get('/:bookingId', bookingController.getBookingById);
 
 router.patch('/:bookingId',
-  authorizeRoles('Student', 'Admin'),
+  authorizeRoles('User', 'Admin'),
   validateRequest(schemas.updateBooking),
   bookingController.updateBooking
 );

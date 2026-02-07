@@ -15,12 +15,12 @@ const seedData = async () => {
       INSERT INTO users (name, email, password_hash, role, is_priority) VALUES
       ('Admin User', 'admin@cafeteria.com', $1, 'Admin', false),
       ('Manager User', 'manager@cafeteria.com', $1, 'Manager', false),
-      ('Staff User', 'staff@cafeteria.com', $1, 'Staff', false),
-      ('John Doe', 'john@student.com', $1, 'Student', false),
-      ('Jane Smith', 'jane@student.com', $1, 'Student', true),
-      ('Bob Wilson', 'bob@student.com', $1, 'Student', false),
-      ('Alice Brown', 'alice@student.com', $1, 'Student', true),
-      ('Charlie Davis', 'charlie@student.com', $1, 'Student', false)
+      ('Canteen Staff User', 'canteenstaff@cafeteria.com', $1, 'CanteenStaff', false),
+      ('John Doe', 'john@user.com', $1, 'User', false),
+      ('Jane Smith', 'jane@user.com', $1, 'User', true),
+      ('Bob Wilson', 'bob@user.com', $1, 'User', false),
+      ('Alice Brown', 'alice@user.com', $1, 'User', true),
+      ('Charlie Davis', 'charlie@user.com', $1, 'User', false)
     `, [passwordHash]);
 
     console.log('Seeding cafeteria timings...');
@@ -105,9 +105,9 @@ const seedData = async () => {
     console.log('==================');
     console.log('Admin: admin@cafeteria.com / password123');
     console.log('Manager: manager@cafeteria.com / password123');
-    console.log('Staff: staff@cafeteria.com / password123');
-    console.log('Student: john@student.com / password123');
-    console.log('Priority Student: jane@student.com / password123');
+    console.log('Staff: canteenstaff@cafeteria.com / password123');
+    console.log('User: john@user.com / password123');
+    console.log('Priority User: jane@user.com / password123');
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('❌ Error seeding data:', error);
