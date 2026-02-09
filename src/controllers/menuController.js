@@ -386,6 +386,7 @@ const menuController = {
   // Legacy endpoint for backward compatibility (returns mock data)
   getMenu: async (req, res) => {
     try {
+<<<<<<< HEAD
       // Check if DB has menus, otherwise return mock data
       const menuCount = await Menu.countDocuments();
 
@@ -414,7 +415,29 @@ const menuController = {
       ];
 
       res.json(MENU_ITEMS);
+=======
+      // Check if DB has items, otherwise seed default items
+      const count = await MenuItem.countDocuments();
+
+      if (count === 0) {
+        // Seed Default Items matching frontend mock
+        const defaultItems = [
+          { itemName: 'Chicken Biryani', price: { small: 120, regular: 180 }, category: 'Lunch', type: 'Non-Veg', allergens: [], ecoScore: 40, imageColor: 'bg-red-100', tags: [] },
+          { itemName: 'Veg Meals', price: { regular: 80 }, category: 'Lunch', type: 'Veg', isJain: true, allergens: ['Dairy'], ecoScore: 80, imageColor: 'bg-green-100', tags: [] },
+          { itemName: 'Paneer Butter Masala', price: { small: 90, regular: 150 }, category: 'Lunch', type: 'Veg', allergens: ['Dairy', 'Nuts'], ecoScore: 60, imageColor: 'bg-orange-50', tags: [] },
+          { itemName: 'Vegan Salad', price: { regular: 120 }, category: 'Lunch', type: 'Vegan', isJain: true, allergens: [], ecoScore: 95, tags: ['Eco'], imageColor: 'bg-green-50' },
+          { itemName: 'Masala Dosa', price: { regular: 60 }, category: 'Breakfast', type: 'Veg', isJain: true, allergens: [], ecoScore: 70, imageColor: 'bg-orange-100' },
+          { itemName: 'Samosa', price: { regular: 20 }, category: 'Snacks', type: 'Veg', allergens: ['Gluten'], ecoScore: 50, imageColor: 'bg-yellow-100' }
+        ];
+        await MenuItem.insertMany(defaultItems);
+      }
+
+      // Return all items
+      const items = await MenuItem.find({}).sort({ category: 1, itemName: 1 });
+      res.json(items);
+>>>>>>> 0ca20192c0a6fb1760a6c42ccf9424991aa20e79
     } catch (error) {
+      console.error('Error fetching menu:', error);
       res.status(500).json({ message: 'Error fetching menu', error: error.message });
     }
   }

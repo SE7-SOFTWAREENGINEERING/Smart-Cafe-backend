@@ -3,23 +3,23 @@ const Joi = require('joi');
 const validateRequest = (schema) => {
   return (req, res, next) => {
     const { error } = schema.validate(req.body, { abortEarly: false });
-    
+
     if (error) {
       const errors = error.details.map(detail => ({
         field: detail.path.join('.'),
         message: detail.message
       }));
-      
+
       console.log('Validation Error:', JSON.stringify(errors, null, 2));
       console.log('Request Body:', req.body);
-      
+
       return res.status(400).json({
         success: false,
         message: 'Validation error',
         errors
       });
     }
-    
+
     next();
   };
 };
@@ -55,7 +55,8 @@ const schemas = {
 
   booking: Joi.object({
     slot_time: Joi.date().iso().required(),
-    meal_type: Joi.string().valid('Breakfast', 'Lunch', 'Snacks', 'Dinner').required()
+    meal_type: Joi.string().valid('Breakfast', 'Lunch', 'Snacks', 'Dinner').required(),
+    items: Joi.array().items(Joi.string()).default([])
   }),
 
   updateBooking: Joi.object({
@@ -92,9 +93,15 @@ const schemas = {
     reason: Joi.string().min(10).max(500).required()
   }),
 
+
   updateRole: Joi.object({
     role: Joi.string().valid('User', 'CanteenStaff', 'Manager', 'Admin').required(),
     is_priority: Joi.boolean()
+  }),
+
+  sustainabilityReport: Joi.object({
+    meal_type: Joi.string().valid('Breakfast', 'Lunch', 'Snacks', 'Dinner', 'Other').required(),
+    reason_for_waste: Joi.string().min(3).max(500).required()
   })
 };
 

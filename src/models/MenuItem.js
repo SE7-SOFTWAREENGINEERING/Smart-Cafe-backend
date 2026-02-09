@@ -5,15 +5,15 @@ const menuItemSchema = new mongoose.Schema(
     menuId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Menu',
-      required: [true, 'Menu ID is required']
+      required: false
     },
     itemName: {
       type: String,
       required: [true, 'Item name is required'],
-      trim: true,
-      maxlength: [100, 'Item name cannot exceed 100 characters']
+      trim: true
     },
     price: {
+<<<<<<< HEAD
       type: Number,
       required: [true, 'Price is required'],
       min: [0, 'Price must be non-negative']
@@ -41,6 +41,46 @@ const menuItemSchema = new mongoose.Schema(
       type: String,
       // enum: ['STARTER', 'MAIN_COURSE', 'SIDE_DISH', 'DESSERT', 'BEVERAGE'], // Relaxed enum for frontend compatibility 'Breakfast', 'Lunch', 'Snacks'
       uppercase: false // Allow mixed case for frontend compatibility
+=======
+      regular: { type: Number, required: true },
+      small: { type: Number }
+    },
+    category: {
+      type: String,
+      enum: ['Breakfast', 'Lunch', 'Snacks', 'Dinner'],
+      required: true,
+      default: 'Lunch'
+    },
+    type: {
+      type: String,
+      enum: ['Veg', 'Non-Veg', 'Vegan'],
+      required: true,
+      default: 'Veg'
+    },
+    isJain: {
+      type: Boolean,
+      default: false
+    },
+    allergens: {
+      type: [String],
+      default: []
+    },
+    tags: {
+      type: [String],
+      default: []
+    },
+    ecoScore: {
+      type: Number,
+      default: 50
+    },
+    imageColor: {
+      type: String,
+      default: 'bg-gray-100'
+    },
+    description: {
+      type: String,
+      trim: true
+>>>>>>> 0ca20192c0a6fb1760a6c42ccf9424991aa20e79
     },
     nutritionalInfo: {
       calories: Number,

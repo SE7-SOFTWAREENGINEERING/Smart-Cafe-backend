@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const Booking = require('../models/Booking');
 const Token = require('../models/Token');
 const Notification = require('../models/Notification');
+const { sendNotificationToUser } = require('../services/socketService');
 
 // User Story #9: Automatically release "No-Show" slots
 const releaseNoShowSlots = async () => {
@@ -11,7 +12,7 @@ const releaseNoShowSlots = async () => {
 
     // Find bookings that are no-shows
     // status: 'Booked', slot_time < cutoffTime
-    
+
     const overdueBookings = await Booking.find({
       status: 'Booked',
       slot_time: { $lt: cutoffTime }
@@ -19,9 +20,9 @@ const releaseNoShowSlots = async () => {
 
     if (overdueBookings.length > 0) {
       console.log(`Marked ${overdueBookings.length} bookings as no-show`);
-      
+
       const bookingIds = overdueBookings.map(b => b.booking_id);
-      
+
       // Update bookings
       await Booking.updateMany(
         { booking_id: { $in: bookingIds } },
@@ -43,18 +44,23 @@ const releaseNoShowSlots = async () => {
       // But for bulk, finding ID for each is tricky efficiently.
       // I'll assume we can use findOne + map or just iterate.
       // Iterating is safer for sequential ID gen.
-      
+
       let lastNotif = await Notification.findOne().sort({ notification_id: -1 });
       let nextId = lastNotif ? lastNotif.notification_id + 1 : 1;
-      
+
       const notifications = overdueBookings.map((b, i) => ({
-         notification_id: nextId + i,
-         user_id: b.user_id,
-         message: `You missed your booking at ${new Date(b.slot_time).toLocaleString()}. Your slot has been released.`,
-         notification_type: 'Alert'
+        notification_id: nextId + i,
+        user_id: b.user_id,
+        message: `You missed your booking at ${new Date(b.slot_time).toLocaleString()}. Your slot has been released.`,
+        notification_type: 'Alert'
       }));
-      
-      await Notification.insertMany(notifications);
+
+      const createdNotifications = await Notification.insertMany(notifications);
+
+      // Send real-time notifications via WebSocket
+      createdNotifications.forEach(notification => {
+        sendNotificationToUser(notification.user_id, notification);
+      });
     }
   } catch (error) {
     console.error('Error releasing no-show slots:', error);
@@ -67,7 +73,7 @@ const sendSlotReminders = async () => {
     const reminderMinutes = parseInt(process.env.NOTIFICATION_REMINDER_MINUTES) || 10;
     const now = new Date();
     const futureWindow = new Date(now.getTime() + reminderMinutes * 60000);
-    
+
     // Find bookings in window
     const upcomingBookings = await Booking.find({
       status: 'Booked',
@@ -77,7 +83,7 @@ const sendSlotReminders = async () => {
     if (upcomingBookings.length > 0) {
       // Filter out those who already received reminder
       const bookingIds = upcomingBookings.map(b => b.booking_id);
-      
+
       const existingReminders = await Notification.find({
         booking_id: { $in: bookingIds }, // Booking ID is NOT in Notification schema I implemented in Step 195/205?
         // Wait, I decided NOT to include booking_id in Notification schema because it wasn't in my reference?
@@ -92,30 +98,35 @@ const sendSlotReminders = async () => {
         // Step 48 schema description I wrote: "notification_id, user_id, message, notification_type, sent_at."
         // I should add booking_id to Notification schema.
       });
-      
+
       // ... I need to add booking_id to Notification schema.
       // Assuming I will do that (simultaneous tool call or next).
-      
+
       // Let's assume I add it.
       const remindedBookingIds = new Set(existingReminders.map(n => n.booking_id));
-      
+
       const toRemind = upcomingBookings.filter(b => !remindedBookingIds.has(b.booking_id));
-      
+
       if (toRemind.length > 0) {
-         console.log(`Sending ${toRemind.length} reminder notifications`);
-         
-         let lastNotif = await Notification.findOne().sort({ notification_id: -1 });
-         let nextId = lastNotif ? lastNotif.notification_id + 1 : 1;
-         
-         const newReminders = toRemind.map((b, i) => ({
-            notification_id: nextId + i,
-            user_id: b.user_id,
-            message: `Reminder: Your ${b.meal_type} slot at ${new Date(b.slot_time).toLocaleTimeString()} is coming up in ${reminderMinutes} minutes!`,
-            notification_type: 'Reminder',
-            booking_id: b.booking_id
-         }));
-         
-         await Notification.insertMany(newReminders);
+        console.log(`Sending ${toRemind.length} reminder notifications`);
+
+        let lastNotif = await Notification.findOne().sort({ notification_id: -1 });
+        let nextId = lastNotif ? lastNotif.notification_id + 1 : 1;
+
+        const newReminders = toRemind.map((b, i) => ({
+          notification_id: nextId + i,
+          user_id: b.user_id,
+          message: `Reminder: Your ${b.meal_type} slot at ${new Date(b.slot_time).toLocaleTimeString()} is coming up in ${reminderMinutes} minutes!`,
+          notification_type: 'Reminder',
+          booking_id: b.booking_id
+        }));
+
+        const createdReminders = await Notification.insertMany(newReminders);
+
+        // Send real-time notifications via WebSocket
+        createdReminders.forEach(notification => {
+          sendNotificationToUser(notification.user_id, notification);
+        });
       }
     }
   } catch (error) {

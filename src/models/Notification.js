@@ -25,6 +25,10 @@ const notificationSchema = new mongoose.Schema({
     type: Number,
     ref: 'Booking'
   },
+  is_read: {
+    type: Boolean,
+    default: false
+  },
   sent_at: {
     type: Date,
     default: Date.now
