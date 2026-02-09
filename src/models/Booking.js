@@ -20,6 +20,10 @@ const bookingSchema = new mongoose.Schema({
     required: true,
     enum: ['Breakfast', 'Lunch', 'Snacks', 'Dinner']
   },
+  items: {
+    type: [String],
+    default: []
+  },
   status: {
     type: String,
     required: true,

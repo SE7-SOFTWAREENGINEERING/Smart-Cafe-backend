@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -8,6 +9,7 @@ require('dotenv').config();
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { initializeCronJobs } = require('./utils/cronJobs');
 const connectDB = require('./config/database');
+const { initializeSocket } = require('./services/socketService');
 
 // Connect to Database
 connectDB();
@@ -25,18 +27,24 @@ const bookingRoutes = require('./routers/bookingRoutes');
 const staffRoutes = require('./routers/staffRoutes');
 const adminRoutes = require('./routers/adminRoutes');
 const notificationRoutes = require('./routers/notificationRoutes');
+const sustainabilityRoutes = require('./routers/sustainabilityRoutes');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
+
+// Initialize WebSocket
+initializeSocket(server);
 
 // Security middleware
 app.use(helmet());
 app.use(cors());
 
+
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 500, // limit each IP to 500 requests per windowMs (increased for development)
   message: 'Too many requests from this IP, please try again later.'
 });
 app.use(limiter);
@@ -54,8 +62,8 @@ if (process.env.NODE_ENV === 'development') {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     message: 'Smart Cafeteria API is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV
@@ -70,6 +78,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/system', systemRoutes);
+app.use('/api/sustainability', sustainabilityRoutes);
 
 // 404 handler
 app.use(notFound);
@@ -81,24 +90,29 @@ app.use(errorHandler);
 initializeCronJobs();
 
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log('='.repeat(50));
   console.log(`🚀 Smart Cafeteria API Server`);
   console.log(`📍 Environment: ${process.env.NODE_ENV}`);
   console.log(`🌐 Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔌 WebSocket ready for real-time notifications`);
   console.log('='.repeat(50));
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing HTTP server');
-  process.exit(0);
+  server.close(() => {
+    process.exit(0);
+  });
 });
 
 process.on('SIGINT', () => {
   console.log('SIGINT signal received: closing HTTP server');
-  process.exit(0);
+  server.close(() => {
+    process.exit(0);
+  });
 });
 
 module.exports = app;

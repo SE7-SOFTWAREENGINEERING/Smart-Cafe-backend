@@ -7,47 +7,53 @@ const Token = require('../models/Token');
 const Capacity = require('../models/Capacity');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const { sendNotificationToUser } = require('../services/socketService');
 
 const bookingController = {
   // Create a new booking
   createBooking: async (req, res, next) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    console.log('📍 createBooking called');
+    console.log('Request Body:', req.body);
+    console.log('User Context:', req.user);
 
     try {
-      const { slot_time, meal_type } = req.body;
+      const { slot_time, meal_type, items } = req.body;
       const userId = req.user.userId;
       const slotTime = new Date(slot_time);
       const now = new Date();
 
       if (slotTime <= now) {
-        throw new Error('Cannot book slots in the past');
+        return res.status(400).json({ success: false, message: 'Cannot book slots in the past' });
       }
 
       // Check if user already has a booking for this slot
-      const existingBooking = await Booking.findOne({ 
-        user_id: userId, 
+      const existingBooking = await Booking.findOne({
+        user_id: userId,
         slot_time: slotTime,
         status: 'Booked'
-      }).session(session);
+      });
+
+      console.log('🔍 Duplicate check:', {
+        userId,
+        slotTime,
+        existingBooking: existingBooking ? {
+          bookingId: existingBooking.booking_id,
+          slotTime: existingBooking.slot_time,
+          status: existingBooking.status
+        } : null
+      });
 
       if (existingBooking) {
-        await session.abortTransaction();
         return res.status(409).json({
           success: false,
           message: 'You already have a booking for this slot'
         });
       }
 
-      // Get user priority status
-      const user = await User.findOne({ user_id: userId }).session(session);
-      const isPriority = user ? user.role === 'Staff' || user.role === 'Admin' || user.role === 'Manager' : false;
-
       // Check capacity
-      const capacity = await Capacity.findOne({ slot_time: slotTime }).session(session);
+      const capacity = await Capacity.findOne({ slot_time: slotTime });
 
       if (!capacity) {
-        await session.abortTransaction();
         return res.status(400).json({
           success: false,
           message: 'No capacity configured for this slot'
@@ -58,34 +64,53 @@ const bookingController = {
       const bookingsCount = await Booking.countDocuments({
         slot_time: slotTime,
         status: 'Booked'
-      }).session(session);
+      });
 
       if (bookingsCount >= capacity.max_capacity) {
-        await session.abortTransaction();
         return res.status(400).json({
           success: false,
           message: 'This slot is full. Please choose another time.'
         });
       }
 
-      const queuePosition = bookingsCount + 1;
+      // Get user priority status
+      const user = await User.findOne({ user_id: userId });
+      const isPriority = user ? ['Staff', 'Admin', 'Manager'].includes(user.role) : false;
 
       // Generate IDs
-      const lastBooking = await Booking.findOne().sort({ booking_id: -1 }).session(session);
+      const lastBooking = await Booking.findOne().sort({ booking_id: -1 });
       const nextBookingId = lastBooking ? lastBooking.booking_id + 1 : 1;
 
-      // Create booking
-      const newBooking = await Booking.create([{
+      console.log('📝 Creating Booking Document...');
+      const bookingData = {
         booking_id: nextBookingId,
         user_id: userId,
         slot_time: slotTime,
         meal_type,
+        items: items || [],
         status: 'Booked',
         is_priority_slot: isPriority,
-        queue_position: queuePosition
-      }], { session });
+        queue_position: 0 // Will be calculated after creation based on timestamp
+      };
+      console.log('Payload:', bookingData);
 
-      const booking = newBooking[0];
+      // Create booking
+      const newBooking = await Booking.create(bookingData);
+      console.log('✅ Booking Document Saved:', newBooking);
+
+      // Recalculate queue positions for this slot based on created_at timestamp
+      const allBookingsForSlot = await Booking.find({
+        slot_time: slotTime,
+        status: 'Booked'
+      }).sort({ is_priority_slot: -1, created_at: 1 }); // Priority first, then by creation time
+
+      // Assign queue positions
+      for (let i = 0; i < allBookingsForSlot.length; i++) {
+        allBookingsForSlot[i].queue_position = i + 1;
+        await allBookingsForSlot[i].save();
+      }
+
+      console.log(`✅ Queue positions recalculated. User position: ${newBooking.queue_position}`);
 
       // Generate QR Token
       const tokenString = uuidv4();
@@ -94,62 +119,58 @@ const bookingController = {
       const expiresAt = new Date(slotTime);
       expiresAt.setMinutes(expiresAt.getMinutes() + expiryMinutes);
 
-      const lastToken = await Token.findOne().sort({ token_id: -1 }).session(session);
+      const lastToken = await Token.findOne().sort({ token_id: -1 });
       const nextTokenId = lastToken ? lastToken.token_id + 1 : 1;
 
-      const newToken = await Token.create([{
+      const newToken = await Token.create({
         token_id: nextTokenId,
-        booking_id: booking.booking_id,
+        booking_id: newBooking.booking_id,
         qr_code: tokenString,
         status: 'Active',
         expires_at: expiresAt
-      }], { session });
-      
-      const token = newToken[0];
+      });
 
       // Create Notification
-      const lastNotif = await Notification.findOne().sort({ notification_id: -1 }).session(session);
+      const lastNotif = await Notification.findOne().sort({ notification_id: -1 });
       const nextNotifId = lastNotif ? lastNotif.notification_id + 1 : 1;
       const reminderMinutes = parseInt(process.env.NOTIFICATION_REMINDER_MINUTES) || 10;
-      
-      await Notification.create([{
+
+      const notification = await Notification.create({
         notification_id: nextNotifId,
         user_id: userId,
-        message: `Your meal slot at ${slotTime.toLocaleTimeString()} is coming up in ${reminderMinutes} minutes!`,
+        message: `Booking confirmed! Your ${meal_type} slot is at ${slotTime.toLocaleTimeString()}. Token: ${tokenString.substring(0, 8)}`,
         notification_type: 'Reminder',
-        booking_id: booking.booking_id // Added booking_id to schema in Step 243
-      }], { session });
+        booking_id: newBooking.booking_id
+      });
 
-      await session.commitTransaction();
+      // Send real-time notification via WebSocket
+      sendNotificationToUser(userId, notification);
 
       res.status(201).json({
         success: true,
         message: 'Booking created successfully',
         data: {
           booking: {
-            bookingId: booking.booking_id,
-            slotTime: booking.slot_time,
-            mealType: booking.meal_type,
-            status: booking.status,
-            queuePosition: booking.queue_position
+            bookingId: newBooking.booking_id,
+            slotTime: newBooking.slot_time,
+            mealType: newBooking.meal_type,
+            status: newBooking.status,
+            queuePosition: newBooking.queue_position
           },
           token: {
-            tokenId: token.token_id,
+            tokenId: newToken.token_id,
             qrCode: tokenString,
             qrCodeImage: qrCodeData,
-            status: token.status
+            status: newToken.status
           }
         }
       });
 
     } catch (error) {
-      await session.abortTransaction();
       if (error.message.includes('past')) {
         return res.status(400).json({ success: false, message: error.message });
       }
       next(error);
-    } finally {
-      session.endSession();
     }
   },
 
@@ -159,6 +180,8 @@ const bookingController = {
       const userId = req.user.userId;
       const { status, upcoming } = req.query;
 
+      console.log(`🔎 Fetching bookings for UserID: ${userId}, Status: ${status}, Upcoming: ${upcoming}`);
+
       let query = { user_id: userId };
 
       if (status) {
@@ -166,18 +189,24 @@ const bookingController = {
       }
 
       if (upcoming === 'true') {
-        query.slot_time = { $gt: new Date() };
+        const windowStart = new Date();
+        windowStart.setHours(windowStart.getHours() - 2);
+        query.slot_time = { $gt: windowStart };
         query.status = 'Booked';
       }
 
-      const bookings = await Booking.find(query).sort({ slot_time: -1 });
-      
+      console.log('Query:', JSON.stringify(query));
+
+      const bookings = await Booking.find(query).sort({ slot_time: -1, queue_position: 1 });
+      console.log(`Found ${bookings.length} bookings from DB`);
+
       const bookingsWithTokens = await Promise.all(bookings.map(async (b) => {
         const token = await Token.findOne({ booking_id: b.booking_id });
         return {
           bookingId: b.booking_id,
           slotTime: b.slot_time,
           mealType: b.meal_type,
+          items: b.items || [],
           status: b.status,
           queuePosition: b.queue_position,
           token: token ? {
@@ -246,61 +275,104 @@ const bookingController = {
 
   // Update Booking (Cancel/Reschedule)
   updateBooking: async (req, res, next) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
       const { bookingId } = req.params;
       const { action } = req.body;
       const userId = req.user.userId;
 
-      const booking = await Booking.findOne({ booking_id: bookingId }).session(session);
+      const booking = await Booking.findOne({ booking_id: bookingId });
 
       if (!booking) {
-        await session.abortTransaction();
         return res.status(404).json({ success: false, message: 'Booking not found' });
       }
 
       if (booking.user_id !== userId) {
-        await session.abortTransaction();
         return res.status(403).json({ success: false, message: 'Access denied' });
       }
 
       if (booking.status !== 'Booked') {
-        await session.abortTransaction();
         return res.status(400).json({ success: false, message: `Cannot modify ${booking.status.toLowerCase()} booking` });
       }
-      
+
       if (action === 'cancel') {
         booking.status = 'Cancelled';
-        await booking.save({ session });
+        await booking.save();
 
-        await Token.updateMany({ booking_id: bookingId }, { status: 'Expired' }).session(session);
-        
-        await Booking.updateMany(
-          { slot_time: booking.slot_time, status: 'Booked', queue_position: { $gt: booking.queue_position } },
-          { $inc: { queue_position: -1 } }
-        ).session(session);
+        await Token.updateMany({ booking_id: bookingId }, { status: 'Expired' });
 
-        await session.commitTransaction();
+        // Send cancellation notification
+        const lastNotif = await Notification.findOne().sort({ notification_id: -1 });
+        const nextNotifId = lastNotif ? lastNotif.notification_id + 1 : 1;
+
+        const cancelNotification = await Notification.create({
+          notification_id: nextNotifId,
+          user_id: userId,
+          message: `Your booking for ${booking.meal_type} at ${new Date(booking.slot_time).toLocaleTimeString()} has been cancelled.`,
+          notification_type: 'Alert',
+          booking_id: bookingId
+        });
+
+        // Send real-time notification
+        sendNotificationToUser(userId, cancelNotification);
+
+        // Recalculate queue positions for this slot after cancellation
+        const allBookingsForSlot = await Booking.find({
+          slot_time: booking.slot_time,
+          status: 'Booked'
+        }).sort({ is_priority_slot: -1, created_at: 1 }); // Priority first, then by creation time
+
+        // Reassign queue positions
+        for (let i = 0; i < allBookingsForSlot.length; i++) {
+          allBookingsForSlot[i].queue_position = i + 1;
+          await allBookingsForSlot[i].save();
+        }
+
         return res.json({ success: true, message: 'Booking cancelled successfully' });
 
       } else if (action === 'reschedule') {
-         await session.abortTransaction();
-         return res.status(501).json({ success: false, message: 'Reschedule verified but not fully implemented in this refactor pass.' });
+        return res.status(501).json({ success: false, message: 'Reschedule verification pending implementation.' });
       }
 
     } catch (error) {
-      await session.abortTransaction();
       next(error);
-    } finally {
-      session.endSession();
     }
   },
 
   // Get Available Slots
   getAvailableSlots: async (req, res, next) => {
     try {
+      // Auto-Seed Capacities if empty
+      const count = await Capacity.countDocuments();
+      if (count === 0) {
+        console.log('Seeding Capacities...');
+        const slotsToInsert = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let idCounter = 1;
+
+        // Seed for next 7 days
+        for (let i = 0; i < 7; i++) {
+          const day = new Date(today);
+          day.setDate(day.getDate() + i);
+
+          // 8 AM to 9 PM, every 15 mins
+          for (let h = 8; h < 21; h++) {
+            for (let m = 0; m < 60; m += 15) {
+              const slot = new Date(day);
+              slot.setHours(h, m, 0, 0);
+
+              slotsToInsert.push({
+                capacity_id: idCounter++,
+                slot_time: slot,
+                max_capacity: 50
+              });
+            }
+          }
+        }
+        await Capacity.insertMany(slotsToInsert);
+        console.log(`Seeded ${slotsToInsert.length} slots`);
+      }
+
       const { date } = req.query;
       let start = new Date();
       let end = new Date();
@@ -308,9 +380,9 @@ const bookingController = {
 
       if (date) {
         start = new Date(date);
-        start.setHours(0,0,0,0);
+        start.setHours(0, 0, 0, 0);
         end = new Date(date);
-        end.setHours(23,59,59,999);
+        end.setHours(23, 59, 59, 999);
       }
 
       const capacities = await Capacity.find({
@@ -322,13 +394,13 @@ const bookingController = {
           slot_time: cap.slot_time,
           status: 'Booked'
         });
-        
+
         return {
-           slotTime: cap.slot_time,
-           maxCapacity: cap.max_capacity,
-           bookedCount,
-           remainingSlots: cap.max_capacity - bookedCount,
-           isAvailable: (cap.max_capacity - bookedCount) > 0
+          slotTime: cap.slot_time,
+          maxCapacity: cap.max_capacity,
+          bookedCount,
+          remainingSlots: cap.max_capacity - bookedCount,
+          isAvailable: (cap.max_capacity - bookedCount) > 0
         };
       }));
 
