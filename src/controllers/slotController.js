@@ -1,340 +1,297 @@
-const { MealSlot, Menu, Booking, CapacityLog, AuditLog } = require('../models');
-const logger = require('../config/logger');
+const Capacity = require('../models/Capacity');
+const Booking = require('../models/Booking');
+const SystemSettings = require('../models/SystemSettings');
 
-/**
- * Create meal slots for a menu
- */
-exports.createMealSlots = async (req, res, next) => {
-  try {
-    const { menuId, slots } = req.body;
-    const userId = req.user.id;
+const slotController = {
+  // Get live slots with occupancy for a specific date
+  getLiveSlots: async (req, res, next) => {
+    try {
+      const { date } = req.query;
+      const queryDate = date ? new Date(date) : new Date();
 
-    // Verify menu exists
-    const menu = await Menu.findById(menuId);
-    if (!menu) {
-      return res.status(404).json({
-        success: false,
-        errorCode: 'MENU_NOT_FOUND',
-        message: 'Menu not found'
-      });
-    }
+      // Ensure full day range
+      const startOfDay = new Date(queryDate);
+      startOfDay.setHours(0, 0, 0, 0);
 
-    // Create slots
-    const createdSlots = [];
-    for (const slotData of slots) {
-      const slot = await MealSlot.create({
-        menuId,
-        slotStart: slotData.slotStart,
-        slotEnd: slotData.slotEnd,
-        maxCapacity: slotData.maxCapacity || parseInt(process.env.DEFAULT_CAPACITY) || 50,
-        isPrioritySlot: slotData.isPrioritySlot || false,
-        priorityFor: slotData.priorityFor || null
-      });
-      createdSlots.push(slot);
-    }
+      const endOfDay = new Date(queryDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-    // Log audit
-    await AuditLog.log({
-      userId,
-      action: `Created ${createdSlots.length} meal slots`,
-      entity: 'MealSlot',
-      method: 'CREATE',
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent')
-    });
+      // Fetch capacities for the day
+      const capacities = await Capacity.find({
+        slot_time: { $gte: startOfDay, $lte: endOfDay }
+      }).sort({ slot_time: 1 });
 
-    logger.info(`Created ${createdSlots.length} meal slots for menu ${menuId}`);
-
-    res.status(201).json({
-      success: true,
-      message: 'Meal slots created successfully',
-      data: {
-        slots: createdSlots,
-        count: createdSlots.length
+      // Check Holiday
+      let isHoliday = false;
+      const holidaySetting = await SystemSettings.findOne({ settingKey: 'HOLIDAY_DATES' });
+      if (holidaySetting) {
+        const blockedDates = JSON.parse(holidaySetting.settingValue);
+        const dateStr = queryDate.toISOString().split('T')[0];
+        if (blockedDates.includes(dateStr)) {
+          isHoliday = true;
+        }
       }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
 
-/**
- * Get available slots for a specific date and meal type
- */
-exports.getAvailableSlots = async (req, res, next) => {
-  try {
-    const { date, mealType } = req.query;
+      const slots = await Promise.all(capacities.map(async (cap) => {
+        const bookedCount = await Booking.countDocuments({
+          slot_time: cap.slot_time,
+          status: 'Booked'
+        });
 
-    if (!date || !mealType) {
-      return res.status(400).json({
-        success: false,
-        errorCode: 'INVALID_PARAMS',
-        message: 'Date and meal type are required'
-      });
-    }
+        return {
+          slotId: cap._id,
+          slotStart: cap.slot_time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          maxCapacity: cap.max_capacity,
+          currentCount: bookedCount,
+          isActive: cap.isActive && !cap.isCancelled && !isHoliday,
+          isFull: bookedCount >= cap.max_capacity,
+          isHoliday: isHoliday // Optional flag for frontend msg
+        };
+      }));
 
-    // Find menu for the date and meal type
-    const menu = await Menu.findOne({
-      menuDate: new Date(date),
-      mealType: mealType.toUpperCase(),
-      isActive: true
-    });
-
-    if (!menu) {
-      return res.json({
+      res.json({
         success: true,
-        message: 'No menu available for this date and meal type',
         data: {
-          slots: [],
-          menu: null
+          date: queryDate.toISOString().split('T')[0],
+          slots
         }
       });
+    } catch (error) {
+      next(error);
     }
+  },
 
-    // Get all slots for this menu
-    const slots = await MealSlot.find({
-      menuId: menu._id,
-      isActive: true
-    }).sort({ slotStart: 1 });
+  // Update capacity
+  updateSlotCapacity: async (req, res, next) => {
+    try {
+      const { slotId } = req.params;
+      const { maxCapacity } = req.body;
 
-    // Add availability info
-    const slotsWithAvailability = slots.map(slot => ({
-      ...slot.toJSON(),
-      availableCapacity: slot.maxCapacity - slot.currentCount,
-      isFull: slot.currentCount >= slot.maxCapacity
-    }));
+      const capacity = await Capacity.findByIdAndUpdate(
+        slotId,
+        { max_capacity: maxCapacity },
+        { new: true }
+      );
 
-    res.json({
-      success: true,
-      data: {
-        menu: menu,
-        slots: slotsWithAvailability,
-        count: slots.length
+      if (!capacity) {
+        return res.status(404).json({
+          success: false,
+          message: 'Slot not found'
+        });
       }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
 
-/**
- * Get slot by ID with booking details
- */
-exports.getSlotById = async (req, res, next) => {
-  try {
-    const { slotId } = req.params;
-
-    const slot = await MealSlot.findById(slotId).populate('menuId');
-    
-    if (!slot) {
-      return res.status(404).json({
-        success: false,
-        errorCode: 'SLOT_NOT_FOUND',
-        message: 'Meal slot not found'
+      res.json({
+        success: true,
+        message: 'Capacity updated',
+        data: capacity
       });
+    } catch (error) {
+      next(error);
     }
+  },
 
-    // Get bookings for this slot
-    const bookings = await Booking.find({
-      mealSlotId: slot._id,
-      status: { $in: ['BOOKED', 'CONSUMED'] }
-    }).populate('userId', 'fullName email rollOrEmployeeId');
+  // Toggle status
+  toggleSlotStatus: async (req, res, next) => {
+    try {
+      const { slotId } = req.params;
 
-    res.json({
-      success: true,
-      data: {
-        slot: {
-          ...slot.toJSON(),
-          availableCapacity: slot.maxCapacity - slot.currentCount,
-          isFull: slot.currentCount >= slot.maxCapacity
-        },
-        bookings: bookings,
-        bookingCount: bookings.length
+      const capacity = await Capacity.findById(slotId);
+
+      if (!capacity) {
+        return res.status(404).json({
+          success: false,
+          message: 'Slot not found'
+        });
       }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
 
-/**
- * Update slot capacity
- */
-exports.updateSlotCapacity = async (req, res, next) => {
-  try {
-    const { slotId } = req.params;
-    const { maxCapacity } = req.body;
-    const userId = req.user.id;
+      // Toggle cancelled status
+      capacity.isCancelled = !capacity.isCancelled;
+      // Sync active status
+      capacity.isActive = !capacity.isCancelled;
 
-    const slot = await MealSlot.findById(slotId);
-    
-    if (!slot) {
-      return res.status(404).json({
-        success: false,
-        errorCode: 'SLOT_NOT_FOUND',
-        message: 'Meal slot not found'
+      await capacity.save();
+
+      res.json({
+        success: true,
+        message: `Slot ${capacity.isCancelled ? 'cancelled' : 're-opened'}`,
+        data: capacity
       });
+    } catch (error) {
+      next(error);
     }
+  },
 
-    // Check if new capacity is less than current bookings
-    if (maxCapacity < slot.currentCount) {
-      return res.status(400).json({
-        success: false,
-        errorCode: 'CAPACITY_TOO_LOW',
-        message: `Cannot set capacity to ${maxCapacity}. Current bookings: ${slot.currentCount}`
-      });
-    }
+  // Get bookings for a slot
+  getSlotBookings: async (req, res, next) => {
+    try {
+      const { slotId } = req.params;
+      const capacity = await Capacity.findById(slotId);
 
-    const oldCapacity = slot.maxCapacity;
-    slot.maxCapacity = maxCapacity;
-    await slot.save();
-
-    // Log audit
-    await AuditLog.log({
-      userId,
-      action: 'Slot capacity updated',
-      entity: 'MealSlot',
-      entityId: slot._id,
-      method: 'UPDATE',
-      changes: { oldCapacity, newCapacity: maxCapacity },
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent')
-    });
-
-    logger.info(`Slot ${slotId} capacity updated from ${oldCapacity} to ${maxCapacity}`);
-
-    res.json({
-      success: true,
-      message: 'Slot capacity updated successfully',
-      data: { slot }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Toggle slot active status
- */
-exports.toggleSlotStatus = async (req, res, next) => {
-  try {
-    const { slotId } = req.params;
-    const userId = req.user.id;
-
-    const slot = await MealSlot.findById(slotId);
-    
-    if (!slot) {
-      return res.status(404).json({
-        success: false,
-        errorCode: 'SLOT_NOT_FOUND',
-        message: 'Meal slot not found'
-      });
-    }
-
-    slot.isActive = !slot.isActive;
-    await slot.save();
-
-    // Log audit
-    await AuditLog.log({
-      userId,
-      action: `Slot ${slot.isActive ? 'activated' : 'deactivated'}`,
-      entity: 'MealSlot',
-      entityId: slot._id,
-      method: 'UPDATE',
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent')
-    });
-
-    logger.info(`Slot ${slotId} ${slot.isActive ? 'activated' : 'deactivated'}`);
-
-    res.json({
-      success: true,
-      message: `Slot ${slot.isActive ? 'activated' : 'deactivated'} successfully`,
-      data: { slot }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Get slot capacity logs
- */
-exports.getSlotCapacityLogs = async (req, res, next) => {
-  try {
-    const { slotId } = req.params;
-    const { limit = 50 } = req.query;
-
-    const logs = await CapacityLog.find({ mealSlotId: slotId })
-      .populate('triggeredBy', 'fullName email')
-      .populate('relatedBookingId')
-      .sort({ loggedAt: -1 })
-      .limit(parseInt(limit));
-
-    res.json({
-      success: true,
-      data: {
-        logs,
-        count: logs.length
+      if (!capacity) {
+        return res.status(404).json({ success: false, message: 'Slot not found' });
       }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
 
-/**
- * Get live capacity view for all active slots (Staff Dashboard)
- */
-exports.getLiveCapacity = async (req, res, next) => {
-  try {
-    const { date, mealType } = req.query;
+      const bookings = await Booking.find({
+        slot_time: capacity.slot_time,
+        status: 'Booked'
+      }).populate('user_id', 'name email role');
 
-    // Build query for menus
-    const menuQuery = { isActive: true };
-    if (date) menuQuery.menuDate = new Date(date);
-    if (mealType) menuQuery.mealType = mealType.toUpperCase();
+      res.json({
+        success: true,
+        data: bookings.map(b => ({
+          bookingId: b.booking_id,
+          userName: b.user_id ? b.user_id.name : 'Unknown',
+          userEmail: b.user_id ? b.user_id.email : '-',
+          role: b.user_id ? b.user_id.role : '-',
+          status: b.status,
+          queuePosition: b.queue_position
+        }))
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 
-    const menus = await Menu.find(menuQuery);
-    const menuIds = menus.map(m => m._id);
+  // Add walk-in bookings (Override)
+  addWalkInBookings: async (req, res, next) => {
+    const mongoose = require('mongoose');
+    const User = require('../models/User');
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Get all active slots for these menus
-    const slots = await MealSlot.find({
-      menuId: { $in: menuIds },
-      isActive: true
-    })
-      .populate('menuId')
-      .sort({ 'menuId.menuDate': 1, slotStart: 1 });
+    try {
+      const { slotId } = req.params;
+      const { count } = req.body;
+      const numToAdd = parseInt(count) || 1;
 
-    // Group by menu and add capacity info
-    const capacityData = slots.map(slot => ({
-      slotId: slot._id,
-      menuDate: slot.menuId.menuDate,
-      mealType: slot.menuId.mealType,
-      slotStart: slot.slotStart,
-      slotEnd: slot.slotEnd,
-      maxCapacity: slot.maxCapacity,
-      currentCount: slot.currentCount,
-      availableCapacity: slot.maxCapacity - slot.currentCount,
-      utilizationRate: ((slot.currentCount / slot.maxCapacity) * 100).toFixed(2),
-      isFull: slot.currentCount >= slot.maxCapacity,
-      isPrioritySlot: slot.isPrioritySlot,
-      priorityFor: slot.priorityFor
-    }));
+      const capacity = await Capacity.findById(slotId).session(session);
+      if (!capacity) {
+        throw new Error('Slot not found');
+      }
 
-    res.json({
-      success: true,
-      data: {
-        slots: capacityData,
-        totalSlots: capacityData.length,
-        summary: {
-          totalCapacity: slots.reduce((sum, s) => sum + s.maxCapacity, 0),
-          totalBooked: slots.reduce((sum, s) => sum + s.currentCount, 0),
-          totalAvailable: slots.reduce((sum, s) => sum + (s.maxCapacity - s.currentCount), 0)
+      // Find or create 'Walk-in' user
+      let walkInUser = await User.findOne({ email: 'walkin@smartcafe.com' }).session(session);
+      if (!walkInUser) {
+        // We need a unique ID for user
+        const lastUser = await User.findOne().sort({ user_id: -1 }).session(session);
+        const nextUserId = lastUser ? lastUser.user_id + 1 : 9999;
+
+        const createdUsers = await User.create([{
+          user_id: nextUserId,
+          name: 'Walk-in Guest',
+          email: 'walkin@smartcafe.com',
+          password: 'walkin_account_secure', // Dummy
+          role: 'User',
+          is_verified: true
+        }], { session });
+        walkInUser = createdUsers[0];
+      }
+
+      // Determine starting queue position
+      const existingCount = await Booking.countDocuments({
+        slot_time: capacity.slot_time
+      }).session(session);
+
+      // Create N bookings
+      const bookingsToCreate = [];
+      const lastBooking = await Booking.findOne().sort({ booking_id: -1 }).session(session);
+      let nextBookingId = lastBooking ? lastBooking.booking_id + 1 : 1;
+
+      for (let i = 0; i < numToAdd; i++) {
+        bookingsToCreate.push({
+          booking_id: nextBookingId + i,
+          user_id: walkInUser.user_id,
+          slot_time: capacity.slot_time,
+          meal_type: 'Walk-in', // Special type
+          status: 'Booked',
+          is_priority_slot: true, // Admin override is priority
+          queue_position: existingCount + i + 1
+        });
+      }
+
+      await Booking.insertMany(bookingsToCreate, { session });
+
+      await session.commitTransaction();
+      res.json({
+        success: true,
+        message: `${numToAdd} walk-in bookings added successfully`
+      });
+
+    } catch (error) {
+      await session.abortTransaction();
+      next(error);
+    } finally {
+      session.endSession();
+    }
+  },
+  deleteSlot: async (req, res, next) => {
+    try {
+      const { slotId } = req.params;
+      const slot = await Capacity.findByIdAndDelete(slotId);
+
+      if (!slot) {
+        return res.status(404).json({ success: false, message: 'Slot not found' });
+      }
+
+      // Also delete associated bookings? Or keep them as orphaned/historical?
+      // For now, let's keep bookings but maybe mark them? 
+      // Actually, if we delete the slot, the bookings lose their reference context if they relied on slot_time matching.
+      // But Booking has slot_time stored.
+
+      res.json({ success: true, message: 'Slot deleted successfully' });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  createSlot: async (req, res, next) => {
+    try {
+      // Expecting date and time separately or a full ISO string?
+      // Let's support both or just full ISO.
+      // Front end might send date and time.
+      const { date, time, maxCapacity } = req.body;
+
+      let slotTime;
+      if (date && time) {
+        const [hours, minutes] = time.split(':').map(Number);
+        slotTime = new Date(date);
+        slotTime.setHours(hours, minutes, 0, 0);
+      } else {
+        return res.status(400).json({ success: false, message: 'Date and time required' });
+      }
+
+      // Check if slot exists
+      const existing = await Capacity.findOne({ slot_time: slotTime });
+      if (existing) {
+        return res.status(409).json({ success: false, message: 'Slot already exists at this time' });
+      }
+
+      const lastC = await Capacity.findOne().sort({ capacity_id: -1 });
+      const nextId = lastC ? lastC.capacity_id + 1 : 1;
+
+      const newSlot = await Capacity.create({
+        capacity_id: nextId,
+        slot_time: slotTime,
+        max_capacity: maxCapacity || 50,
+        isActive: true
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Slot created successfully',
+        data: {
+          slotId: newSlot._id,
+          slotStart: newSlot.slot_time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          maxCapacity: newSlot.max_capacity,
+          currentCount: 0,
+          isActive: true,
+          isFull: false
         }
-      }
-    });
-  } catch (error) {
-    next(error);
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 };
+
+module.exports = slotController;

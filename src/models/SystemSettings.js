@@ -13,7 +13,7 @@ const systemSettingsSchema = new mongoose.Schema(
     settingValue: {
       type: String,
       required: [true, 'Setting value is required'],
-      maxlength: [500, 'Setting value cannot exceed 500 characters']
+      maxlength: [5000, 'Setting value cannot exceed 5000 characters']
     },
     dataType: {
       type: String,
@@ -27,7 +27,7 @@ const systemSettingsSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['BOOKING', 'CAPACITY', 'NOTIFICATION', 'SECURITY', 'GENERAL'],
+      enum: ['BOOKING', 'CAPACITY', 'NOTIFICATION', 'SECURITY', 'GENERAL', 'TIMINGS'],
       uppercase: true
     },
     isEditable: {
@@ -35,18 +35,28 @@ const systemSettingsSchema = new mongoose.Schema(
       default: true
     },
     updatedBy: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed, // Allow Number or ObjectId to prevnt casting errors on old data
       ref: 'User'
     }
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
 
 // Indexes
 systemSettingsSchema.index({ settingKey: 1 });
 systemSettingsSchema.index({ category: 1 });
+
+// Virtual for updater
+systemSettingsSchema.virtual('updater', {
+  ref: 'User',
+  localField: 'updatedBy',
+  foreignField: 'user_id',
+  justOne: true
+});
 
 // Method to get typed value
 systemSettingsSchema.methods.getTypedValue = function () {
@@ -76,9 +86,9 @@ systemSettingsSchema.statics.getSetting = async function (key) {
 systemSettingsSchema.statics.updateSetting = async function (key, value, userId) {
   return await this.findOneAndUpdate(
     { settingKey: key.toUpperCase() },
-    { 
+    {
       settingValue: String(value),
-      updatedBy: userId 
+      updatedBy: userId
     },
     { new: true, upsert: true }
   );

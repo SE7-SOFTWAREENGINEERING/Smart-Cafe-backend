@@ -37,6 +37,12 @@ const bookingSchema = new mongoose.Schema({
   created_at: {
     type: Date,
     default: Date.now
+  },
+  canteen: {
+    type: String,
+    enum: ['Sopanam', 'Prasada', 'Samudra'],
+    required: true,
+    default: 'Sopanam'
   }
 });
 

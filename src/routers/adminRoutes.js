@@ -10,20 +10,23 @@ router.use(authorizeRoles('Admin'));
 
 // User management
 router.get('/users', adminController.getAllUsers);
-router.patch('/users/:userId/role', 
+router.patch('/users/:userId/role',
   validateRequest(schemas.updateRole),
   adminController.updateUserRole
 );
+router.post('/users', adminController.createUser);
+router.delete('/users/:userId', adminController.deleteUser);
+router.patch('/users/:userId/status', adminController.updateUserStatus);
 
 // Cafeteria timings
 router.get('/timings', adminController.getCafeteriaTimings);
-router.post('/timings', 
+router.post('/timings',
   validateRequest(schemas.cafeteriaTiming),
   adminController.setCafeteriaTiming
 );
 
 // Capacity management
-router.post('/capacity', 
+router.post('/capacity',
   validateRequest(schemas.capacity),
   adminController.setSlotCapacity
 );

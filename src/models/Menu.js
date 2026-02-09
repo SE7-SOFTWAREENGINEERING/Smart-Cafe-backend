@@ -18,8 +18,8 @@ const menuSchema = new mongoose.Schema(
       default: true
     },
     createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      type: Number,
+      required: false
     }
   },
   {
@@ -36,6 +36,14 @@ menuSchema.virtual('items', {
   ref: 'MenuItem',
   localField: '_id',
   foreignField: 'menuId'
+});
+
+// Virtual for creator - using user_id ref
+menuSchema.virtual('creator', {
+  ref: 'User',
+  localField: 'createdBy',
+  foreignField: 'user_id',
+  justOne: true
 });
 
 const Menu = mongoose.model('Menu', menuSchema);

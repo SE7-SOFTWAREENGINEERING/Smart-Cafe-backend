@@ -182,6 +182,52 @@ const menuController = {
     }
   },
 
+  // Get all items for a specific date (defaults to today) - Flattened structure for frontend
+  getDailyMenuItems: async (req, res, next) => {
+    try {
+      const { date } = req.query;
+
+      const queryDate = date ? new Date(date) : new Date();
+      queryDate.setHours(0, 0, 0, 0);
+
+      const endDate = new Date(queryDate);
+      endDate.setHours(23, 59, 59, 999);
+
+      // Find all active menus for this date
+      const menus = await Menu.find({
+        menuDate: { $gte: queryDate, $lte: endDate },
+        isActive: true
+      });
+
+      const menuIds = menus.map(m => m._id);
+
+      // Find all items belonging to these menus
+      const items = await MenuItem.find({ menuId: { $in: menuIds } });
+
+      // Map items to include mealType from their parent menu
+      const flattenedItems = items.map(item => {
+        const parentMenu = menus.find(m => m._id.equals(item.menuId));
+        return {
+          ...item.toObject(),
+          id: item._id, // Frontend expects 'id'
+          mealType: parentMenu ? parentMenu.mealType : 'UNKNOWN',
+          // Frontend expects these fields, map them if needed or rely on direct property
+          name: item.itemName,
+          dietaryType: item.dietaryType || (item.isVeg ? 'Veg' : 'Non-Veg'),
+          ecoScore: item.ecoScore || item.nutritionalInfo?.ecoScore || 'C', // Prefer top-level
+          isAvailable: item.isAvailable !== undefined ? item.isAvailable : true
+        };
+      });
+
+      res.json({
+        success: true,
+        data: flattenedItems
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // Get a single menu item
   getMenuItem: async (req, res, next) => {
     try {
@@ -205,27 +251,70 @@ const menuController = {
     }
   },
 
-  // Create a menu item (Admin only)
+  // Create a menu item (Admin only) - Improved to handle Menu creation automatically
   createMenuItem: async (req, res, next) => {
     try {
-      const { menuId, itemName, isVeg, description, category, nutritionalInfo } = req.body;
+      // Allow passing menuId OR (date + mealType)
+      let { menuId, date, mealType, itemName, price, isVeg, description, category, nutritionalInfo, portionSize, dietaryType, ecoScore, allergens } = req.body;
+
+      // If no menuId, try to find or create one
+      if (!menuId && date && mealType) {
+        const menuDate = new Date(date);
+        menuDate.setHours(0, 0, 0, 0);
+
+        // Find existing menu
+        let menu = await Menu.findOne({
+          menuDate: menuDate,
+          mealType: mealType.toUpperCase()
+        });
+
+        // Create if not exists
+        if (!menu) {
+          // Default creator to first admin if not in req.user (should be there though)
+          const createdBy = req.user ? req.user.userId : null;
+
+          menu = await Menu.create({
+            menuDate: menuDate,
+            mealType: mealType.toUpperCase(),
+            isActive: true,
+            createdBy: createdBy
+          });
+        }
+        menuId = menu._id;
+      }
 
       // Verify menu exists
       const menu = await Menu.findById(menuId);
       if (!menu) {
         return res.status(404).json({
           success: false,
-          message: 'Menu not found'
+          message: 'Menu not found. Please provide valid menuId or date+mealType'
         });
       }
+
+      // Ensure dietaryType and isVeg are consistent
+      if (dietaryType && !isVeg) {
+        isVeg = ['Veg', 'Vegan', 'Jain'].includes(dietaryType);
+      }
+
+      // Map ecoScore into nutritionalInfo if provided separately (Legacy support)
+      // if (ecoScore) {
+      //   nutritionalInfo = { ...nutritionalInfo, ecoScore };
+      // }
 
       const item = await MenuItem.create({
         menuId,
         itemName,
+        price,
         isVeg,
         description,
         category: category?.toUpperCase(),
-        nutritionalInfo
+        nutritionalInfo,
+        portionSize,
+        dietaryType,
+        allergens,
+        ecoScore,
+        isAvailable: true // Default to true on creation
       });
 
       res.status(201).json({
@@ -234,6 +323,10 @@ const menuController = {
         data: item
       });
     } catch (error) {
+      const fs = require('fs');
+      try {
+        fs.appendFileSync('debug_menu.log', `Error: ${error.message}\nStack: ${error.stack}\nBody: ${JSON.stringify(req.body)}\n---\n`);
+      } catch (e) { console.error('Logging failed', e); }
       next(error);
     }
   },
@@ -242,11 +335,11 @@ const menuController = {
   updateMenuItem: async (req, res, next) => {
     try {
       const { itemId } = req.params;
-      const { itemName, isVeg, description, category, nutritionalInfo } = req.body;
+      const { itemName, isVeg, description, category, nutritionalInfo, price, portionSize, dietaryType, allergens, ecoScore, isAvailable } = req.body;
 
       const item = await MenuItem.findByIdAndUpdate(
         itemId,
-        { itemName, isVeg, description, category: category?.toUpperCase(), nutritionalInfo },
+        { itemName, isVeg, description, category: category?.toUpperCase(), nutritionalInfo, price, portionSize, dietaryType, allergens, ecoScore, isAvailable },
         { new: true, runValidators: true }
       );
 
@@ -295,16 +388,16 @@ const menuController = {
     try {
       // Check if DB has menus, otherwise return mock data
       const menuCount = await Menu.countDocuments();
-      
+
       if (menuCount > 0) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
-        const menus = await Menu.find({ 
+
+        const menus = await Menu.find({
           menuDate: { $gte: today },
-          isActive: true 
+          isActive: true
         }).populate('items');
-        
+
         const items = menus.flatMap(m => m.items || []);
         return res.json(items);
       }
@@ -319,7 +412,7 @@ const menuController = {
         { id: '6', name: 'Samosa', price: { regular: 20 }, category: 'Snacks', type: 'Veg', isJain: false, allergens: ['Gluten'], ecoScore: 75, imageColor: 'bg-yellow-100' },
         { id: '7', name: 'Vegan Salad', price: { regular: 120 }, category: 'Lunch', type: 'Vegan', isJain: true, allergens: [], ecoScore: 95, imageColor: 'bg-green-50' },
       ];
-      
+
       res.json(MENU_ITEMS);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching menu', error: error.message });

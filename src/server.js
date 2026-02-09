@@ -24,6 +24,7 @@ const systemRoutes = require('./routers/systemRoutes');
 const bookingRoutes = require('./routers/bookingRoutes');
 const staffRoutes = require('./routers/staffRoutes');
 const adminRoutes = require('./routers/adminRoutes');
+const slotRoutes = require('./routers/slotRoutes');
 const notificationRoutes = require('./routers/notificationRoutes');
 
 const app = express();
@@ -35,7 +36,7 @@ app.use(cors());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
+  windowMs: 15 * 60 * 1000,
   max: 100, // limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again later.'
 });
@@ -54,8 +55,8 @@ if (process.env.NODE_ENV === 'development') {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     message: 'Smart Cafeteria API is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV
@@ -67,6 +68,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/slots', slotRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/system', systemRoutes);

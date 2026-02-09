@@ -12,6 +12,7 @@ router.get('/:menuId', authenticateToken, menuController.getMenuById);
 router.get('/:menuId/items', authenticateToken, menuController.getMenuItems);
 
 // Menu item detail - for student item page
+router.get('/items/daily', authenticateToken, menuController.getDailyMenuItems);
 router.get('/items/:itemId', authenticateToken, menuController.getMenuItem);
 
 // Admin only routes - Menu management

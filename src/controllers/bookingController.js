@@ -7,6 +7,7 @@ const Token = require('../models/Token');
 const Capacity = require('../models/Capacity');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const SystemSettings = require('../models/SystemSettings');
 
 const bookingController = {
   // Create a new booking
@@ -15,18 +16,33 @@ const bookingController = {
     session.startTransaction();
 
     try {
-      const { slot_time, meal_type } = req.body;
+      const { slot_time, meal_type, canteen } = req.body;
       const userId = req.user.userId;
       const slotTime = new Date(slot_time);
       const now = new Date();
+      const selectedCanteen = canteen || 'Sopanam';
 
       if (slotTime <= now) {
         throw new Error('Cannot book slots in the past');
       }
 
+      // Check against Holiday/Maintenance Dates
+      const holidaySetting = await SystemSettings.findOne({ settingKey: `HOLIDAY_DATES_${selectedCanteen.toUpperCase()}` }).session(session);
+      if (holidaySetting) {
+        const blockedDates = JSON.parse(holidaySetting.settingValue); // ['2024-03-25', ...]
+        const bookingDateStr = slotTime.toISOString().split('T')[0];
+        if (blockedDates.includes(bookingDateStr)) {
+          await session.abortTransaction();
+          return res.status(400).json({
+            success: false,
+            message: `${selectedCanteen} is closed for maintenance/holiday on this date.`
+          });
+        }
+      }
+
       // Check if user already has a booking for this slot
-      const existingBooking = await Booking.findOne({ 
-        user_id: userId, 
+      const existingBooking = await Booking.findOne({
+        user_id: userId,
         slot_time: slotTime,
         status: 'Booked'
       }).session(session);
@@ -44,7 +60,10 @@ const bookingController = {
       const isPriority = user ? user.role === 'Staff' || user.role === 'Admin' || user.role === 'Manager' : false;
 
       // Check capacity
-      const capacity = await Capacity.findOne({ slot_time: slotTime }).session(session);
+      const capacity = await Capacity.findOne({
+        slot_time: slotTime,
+        canteen: selectedCanteen
+      }).session(session);
 
       if (!capacity) {
         await session.abortTransaction();
@@ -80,6 +99,7 @@ const bookingController = {
         user_id: userId,
         slot_time: slotTime,
         meal_type,
+        canteen: selectedCanteen,
         status: 'Booked',
         is_priority_slot: isPriority,
         queue_position: queuePosition
@@ -104,14 +124,14 @@ const bookingController = {
         status: 'Active',
         expires_at: expiresAt
       }], { session });
-      
+
       const token = newToken[0];
 
       // Create Notification
       const lastNotif = await Notification.findOne().sort({ notification_id: -1 }).session(session);
       const nextNotifId = lastNotif ? lastNotif.notification_id + 1 : 1;
       const reminderMinutes = parseInt(process.env.NOTIFICATION_REMINDER_MINUTES) || 10;
-      
+
       await Notification.create([{
         notification_id: nextNotifId,
         user_id: userId,
@@ -171,7 +191,7 @@ const bookingController = {
       }
 
       const bookings = await Booking.find(query).sort({ slot_time: -1 });
-      
+
       const bookingsWithTokens = await Promise.all(bookings.map(async (b) => {
         const token = await Token.findOne({ booking_id: b.booking_id });
         return {
@@ -270,13 +290,13 @@ const bookingController = {
         await session.abortTransaction();
         return res.status(400).json({ success: false, message: `Cannot modify ${booking.status.toLowerCase()} booking` });
       }
-      
+
       if (action === 'cancel') {
         booking.status = 'Cancelled';
         await booking.save({ session });
 
         await Token.updateMany({ booking_id: bookingId }, { status: 'Expired' }).session(session);
-        
+
         await Booking.updateMany(
           { slot_time: booking.slot_time, status: 'Booked', queue_position: { $gt: booking.queue_position } },
           { $inc: { queue_position: -1 } }
@@ -286,8 +306,8 @@ const bookingController = {
         return res.json({ success: true, message: 'Booking cancelled successfully' });
 
       } else if (action === 'reschedule') {
-         await session.abortTransaction();
-         return res.status(501).json({ success: false, message: 'Reschedule verified but not fully implemented in this refactor pass.' });
+        await session.abortTransaction();
+        return res.status(501).json({ success: false, message: 'Reschedule verified but not fully implemented in this refactor pass.' });
       }
 
     } catch (error) {
@@ -301,20 +321,22 @@ const bookingController = {
   // Get Available Slots
   getAvailableSlots: async (req, res, next) => {
     try {
-      const { date } = req.query;
+      const { date, canteen } = req.query;
+      const selectedCanteen = canteen || 'Sopanam';
       let start = new Date();
       let end = new Date();
       end.setDate(end.getDate() + 7);
 
       if (date) {
         start = new Date(date);
-        start.setHours(0,0,0,0);
+        start.setHours(0, 0, 0, 0);
         end = new Date(date);
-        end.setHours(23,59,59,999);
+        end.setHours(23, 59, 59, 999);
       }
 
       const capacities = await Capacity.find({
-        slot_time: { $gte: start, $lte: end }
+        slot_time: { $gte: start, $lte: end },
+        canteen: selectedCanteen
       }).sort({ slot_time: 1 });
 
       const slots = await Promise.all(capacities.map(async (cap) => {
@@ -322,13 +344,13 @@ const bookingController = {
           slot_time: cap.slot_time,
           status: 'Booked'
         });
-        
+
         return {
-           slotTime: cap.slot_time,
-           maxCapacity: cap.max_capacity,
-           bookedCount,
-           remainingSlots: cap.max_capacity - bookedCount,
-           isAvailable: (cap.max_capacity - bookedCount) > 0
+          slotTime: cap.slot_time,
+          maxCapacity: cap.max_capacity,
+          bookedCount,
+          remainingSlots: cap.max_capacity - bookedCount,
+          isAvailable: (cap.max_capacity - bookedCount) > 0
         };
       }));
 

@@ -13,6 +13,20 @@ const capacitySchema = new mongoose.Schema({
   max_capacity: {
     type: Number,
     required: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  isCancelled: {
+    type: Boolean,
+    default: false
+  },
+  canteen: {
+    type: String,
+    enum: ['Sopanam', 'Prasada', 'Samudra'],
+    required: true,
+    default: 'Sopanam'
   }
 });
 

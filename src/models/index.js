@@ -11,6 +11,7 @@ const CafeteriaSchedule = require('./CafeteriaSchedule');
 const DemandForecast = require('./DemandForeCast');
 const SystemSettings = require('./SystemSettings');
 const AuditLog = require('./AuditLog');
+const Capacity = require('./Capacity');
 
 module.exports = {
   User,
@@ -25,5 +26,6 @@ module.exports = {
   CafeteriaSchedule,
   DemandForecast,
   SystemSettings,
-  AuditLog
+  AuditLog,
+  Capacity
 };
