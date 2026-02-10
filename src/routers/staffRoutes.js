@@ -15,7 +15,8 @@ router.post('/scan-token', staffController.scanToken);
 router.post('/walk-in-token', staffController.issueWalkInToken);
 
 // Emergency announcements
-router.post('/announcement', 
+router.get('/announcement', staffController.getAnnouncements);
+router.post('/announcement',
   validateRequest(schemas.announcement),
   staffController.sendAnnouncement
 );

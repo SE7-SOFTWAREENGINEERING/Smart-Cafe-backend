@@ -3,23 +3,23 @@ const Joi = require('joi');
 const validateRequest = (schema) => {
   return (req, res, next) => {
     const { error } = schema.validate(req.body, { abortEarly: false });
-    
+
     if (error) {
       const errors = error.details.map(detail => ({
         field: detail.path.join('.'),
         message: detail.message
       }));
-      
+
       console.log('Validation Error:', JSON.stringify(errors, null, 2));
       console.log('Request Body:', req.body);
-      
+
       return res.status(400).json({
         success: false,
         message: 'Validation error',
         errors
       });
     }
-    
+
     next();
   };
 };
@@ -69,9 +69,7 @@ const schemas = {
 
   capacity: Joi.object({
     slot_time: Joi.date().iso().required(),
-    meal_type: Joi.string().valid('Breakfast', 'Lunch', 'Snacks', 'Dinner').required(),
-    max_capacity: Joi.number().integer().min(1).required(),
-    priority_capacity: Joi.number().integer().min(0).default(5)
+    max_capacity: Joi.number().integer().min(1).required()
   }),
 
   cafeteriaTiming: Joi.object({

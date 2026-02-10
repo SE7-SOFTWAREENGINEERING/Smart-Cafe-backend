@@ -5,16 +5,13 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 // All routes require admin authentication
 router.use(authenticateToken);
+// GET routes accessible by Admin and Manager
+router.get('/', authorizeRoles('Admin', 'Manager'), systemController.getAllSettings);
+router.get('/grouped', authorizeRoles('Admin', 'Manager'), systemController.getSettingsByCategory);
+router.get('/:key', authorizeRoles('Admin', 'Manager'), systemController.getSetting);
+
+// Modification routes require Admin only
 router.use(authorizeRoles('Admin'));
-
-// Get all settings (with optional category filter)
-router.get('/', systemController.getAllSettings);
-
-// Get settings grouped by category
-router.get('/grouped', systemController.getSettingsByCategory);
-
-// Get a single setting by key
-router.get('/:key', systemController.getSetting);
 
 // Create or update a setting
 router.post('/', systemController.upsertSetting);

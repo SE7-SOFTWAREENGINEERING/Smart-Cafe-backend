@@ -17,7 +17,7 @@ const staffController = {
       // Mongoose doesn't support deep populate easily in one line without schema definitions having refs properly set up.
       // Token has ref to Booking (booking_id). Booking has ref to User (user_id).
       // So path: 'booking_id', populate: { path: 'user_id' }
-      
+
       const token = await Token.findOne({ qr_code });
 
       if (!token) {
@@ -31,9 +31,9 @@ const staffController = {
       // Manual population if needed or use simple queries for robust refactor
       const booking = await Booking.findOne({ booking_id: token.booking_id });
       if (!booking) {
-         return res.status(404).json({ success: false, message: 'Booking not found', access: 'DENIED' });
+        return res.status(404).json({ success: false, message: 'Booking not found', access: 'DENIED' });
       }
-      
+
       const user = await User.findOne({ user_id: booking.user_id });
 
       const now = new Date();
@@ -44,7 +44,7 @@ const staffController = {
       // So I will rely on status or calculation.
       // Original code: if (token.status === 'Expired' || now > expiresAt)
       // I'll stick to status check.
-      
+
       if (token.status === 'Used') {
         return res.status(400).json({ success: false, message: 'Token already used', access: 'DENIED' });
       }
@@ -54,7 +54,7 @@ const staffController = {
       }
 
       if (booking.status !== 'Booked') {
-         return res.status(400).json({ success: false, message: `Booking is ${booking.status.toLowerCase()}`, access: 'DENIED' });
+        return res.status(400).json({ success: false, message: `Booking is ${booking.status.toLowerCase()}`, access: 'DENIED' });
       }
 
       // Check early entry (15 min grace)
@@ -63,12 +63,12 @@ const staffController = {
       earliestEntry.setMinutes(earliestEntry.getMinutes() - gracePeriodBefore);
 
       if (now < earliestEntry) {
-         return res.status(400).json({
-           success: false,
-           message: `Too early. Please come back after ${earliestEntry.toLocaleTimeString()}`,
-           access: 'DENIED',
-           slotTime: slotTime
-         });
+        return res.status(400).json({
+          success: false,
+          message: `Too early. Please come back after ${earliestEntry.toLocaleTimeString()}`,
+          access: 'DENIED',
+          slotTime: slotTime
+        });
       }
 
       // Valid: Mark used
@@ -85,13 +85,13 @@ const staffController = {
       // Get next notification ID
       const lastNotif = await Notification.findOne().sort({ notification_id: -1 });
       const nextNotifId = lastNotif ? lastNotif.notification_id + 1 : 1;
-      
+
       await Notification.create({
-         notification_id: nextNotifId,
-         user_id: user.user_id,
-         message: 'Your token has been validated. Enjoy your meal!',
-         notification_type: 'Alert'
-         // booking_id: booking.booking_id // Notification schema doesn't have booking_id
+        notification_id: nextNotifId,
+        user_id: user.user_id,
+        message: 'Your token has been validated. Enjoy your meal!',
+        notification_type: 'Alert'
+        // booking_id: booking.booking_id // Notification schema doesn't have booking_id
       });
 
       res.json({
@@ -129,18 +129,18 @@ const staffController = {
       let availableSlot = null;
 
       for (const cap of capacities) {
-         // Check if this slot matches meal_type? 
-         // Capacity schema (Step 46) doesn't have meal_type!
-         // Original code queried 'capacity' table which had 'meal_type'.
-         // I am missing meal_type in Capacity schema.
-         // Assumption: Determine meal_type from time? Or ignore check?
-         // I'll skip meal_type check on Capacity and just rely on time + booking count.
-         
-         const bookedCount = await Booking.countDocuments({ slot_time: cap.slot_time, status: 'Booked' });
-         if (bookedCount < cap.max_capacity) {
-            availableSlot = cap;
-            break; 
-         }
+        // Check if this slot matches meal_type? 
+        // Capacity schema (Step 46) doesn't have meal_type!
+        // Original code queried 'capacity' table which had 'meal_type'.
+        // I am missing meal_type in Capacity schema.
+        // Assumption: Determine meal_type from time? Or ignore check?
+        // I'll skip meal_type check on Capacity and just rely on time + booking count.
+
+        const bookedCount = await Booking.countDocuments({ slot_time: cap.slot_time, status: 'Booked' });
+        if (bookedCount < cap.max_capacity) {
+          availableSlot = cap;
+          break;
+        }
       }
 
       if (!availableSlot) {
@@ -170,7 +170,7 @@ const staffController = {
       const qrCodeData = await QRCode.toDataURL(tokenString);
       const lastT = await Token.findOne().sort({ token_id: -1 });
       const nextTId = lastT ? lastT.token_id + 1 : 1;
-      
+
       const token = await Token.create({
         token_id: nextTId,
         booking_id: booking.booking_id,
@@ -181,7 +181,7 @@ const staffController = {
       // Notify
       const lastN = await Notification.findOne().sort({ notification_id: -1 });
       const nextNId = lastN ? lastN.notification_id + 1 : 1;
-      
+
       await Notification.create({
         notification_id: nextNId,
         user_id: user.user_id,
@@ -219,14 +219,13 @@ const staffController = {
   sendAnnouncement: async (req, res, next) => {
     try {
       const { message } = req.body;
-      
-      // Get all active users
-      // Distinct users with booked status and future slot
-      const bookings = await Booking.find({ 
+
+      // Get all active users (Booked status for future slots)
+      const bookings = await Booking.find({
         status: 'Booked',
         slot_time: { $gte: new Date() }
       });
-      
+
       const userIds = [...new Set(bookings.map(b => b.user_id))];
 
       if (userIds.length === 0) {
@@ -234,73 +233,111 @@ const staffController = {
       }
 
       // Create notifications
-      let lastN = await Notification.findOne().sort({ notification_id: -1 });
+      const lastN = await Notification.findOne().sort({ notification_id: -1 });
       let nextNId = lastN ? lastN.notification_id + 1 : 1;
-      
+
       const notifications = userIds.map((uid, index) => ({
-         notification_id: nextNId + index,
-         user_id: uid,
-         message: message,
-         notification_type: 'Announcement'
+        notification_id: nextNId + index,
+        user_id: uid,
+        message: message,
+        notification_type: 'Announcement',
+        is_read: false
       }));
-      
+
       await Notification.insertMany(notifications);
 
       res.json({
         success: true,
         message: 'Emergency announcement sent successfully',
-        notificationsSent: notifications.length
+        notificationsSent: notifications.length,
+        timestamp: new Date()
       });
 
     } catch (error) {
-       next(error);
+      next(error);
+    }
+  },
+
+  // Get sent announcements history
+  getAnnouncements: async (req, res, next) => {
+    try {
+      // Find one notification per announcement "batch" or just all?
+      // Since we create N notifications for N users for the same message, 
+      // getting "history" is tricky unless we have a separate Announcements table.
+      // For now, I'll group by message/time or just return distinct messages recently sent.
+
+      // Aggregate to find distinct recent messages of type 'Announcement'
+      const announcements = await Notification.aggregate([
+        { $match: { notification_type: 'Announcement' } },
+        { $sort: { sent_at: -1 } },
+        {
+          $group: {
+            _id: "$message",
+            sent_at: { $first: "$sent_at" },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { sent_at: -1 } },
+        { $limit: 10 }
+      ]);
+
+      res.json({
+        success: true,
+        data: announcements.map(a => ({
+          message: a._id,
+          sentAt: a.sent_at,
+          recipientCount: a.count
+        }))
+      });
+    } catch (error) {
+      next(error);
     }
   },
 
   // Get queue status
   getQueueStatus: async (req, res, next) => {
     try {
-       const { meal_type } = req.query;
-       const now = new Date();
-       const next2Hours = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+      const { meal_type } = req.query;
+      const now = new Date();
+      const next2Hours = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
-       const query = {
-         slot_time: { $gte: now, $lte: next2Hours }
-       };
+      const query = {
+        slot_time: { $gte: now, $lte: next2Hours }
+      };
 
-       if (meal_type) {
-         query.meal_type = meal_type;
-       }
+      if (meal_type) {
+        query.meal_type = meal_type;
+      }
 
-       const bookings = await Booking.find(query);
-       
-       // Group by slot_time
-       const statusMap = {};
-       bookings.forEach(b => {
-          const key = b.slot_time.toISOString();
-          if (!statusMap[key]) {
-             statusMap[key] = {
-               slotTime: b.slot_time,
-               mealType: b.meal_type,
-               waiting: 0,
-               completed: 0,
-               noShows: 0
-             };
-          }
-          if (b.status === 'Booked') statusMap[key].waiting++;
-          else if (b.status === 'Completed') statusMap[key].completed++;
-          else if (b.status === 'NoShow' || b.status === 'No-show') statusMap[key].noShows++;
-       });
+      const bookings = await Booking.find(query);
 
-       const queueStatus = Object.values(statusMap).sort((a,b) => a.slotTime - b.slotTime);
+      // Group by slot_time
+      const statusMap = {};
+      bookings.forEach(b => {
+        const key = b.slot_time.toISOString();
+        if (!statusMap[key]) {
+          statusMap[key] = {
+            slotTime: b.slot_time,
+            mealType: b.meal_type,
+            waiting: 0,
+            completed: 0,
+            noShows: 0
+          };
+        }
+        if (b.status === 'Booked') statusMap[key].waiting++;
+        else if (b.status === 'Completed') statusMap[key].completed++;
+        else if (b.status === 'NoShow' || b.status === 'No-show') statusMap[key].noShows++;
+      });
 
-       res.json({
-         success: true,
-         data: {
-           currentTime: now,
-           queueStatus
-         }
-       });
+      const queueStatus = Object.values(statusMap).sort((a, b) => a.slotTime - b.slotTime);
+
+      res.json({
+        success: true,
+        data: {
+          currentTime: now,
+          queueStatus
+        }
+      });
     } catch (error) {
       next(error);
     }
