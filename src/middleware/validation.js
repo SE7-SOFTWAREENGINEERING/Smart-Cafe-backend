@@ -84,7 +84,8 @@ const schemas = {
   }),
 
   announcement: Joi.object({
-    message: Joi.string().min(10).max(500).required()
+    message: Joi.string().min(10).max(500).required(),
+    is_priority: Joi.boolean().default(false)
   }),
 
   wasteReport: Joi.object({

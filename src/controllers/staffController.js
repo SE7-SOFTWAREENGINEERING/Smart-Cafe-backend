@@ -171,11 +171,15 @@ const staffController = {
       const lastT = await Token.findOne().sort({ token_id: -1 });
       const nextTId = lastT ? lastT.token_id + 1 : 1;
       
+      // Token expires 2 hours from now
+      const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+      
       const token = await Token.create({
         token_id: nextTId,
         booking_id: booking.booking_id,
         qr_code: tokenString,
-        status: 'Active'
+        status: 'Active',
+        expires_at: expiresAt
       });
 
       // Notify
