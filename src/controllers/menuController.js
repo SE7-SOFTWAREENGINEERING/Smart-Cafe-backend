@@ -26,7 +26,7 @@ const menuController = {
 
       const menus = await Menu.find(query)
         .populate('items')
-        .populate('createdBy', 'name email')
+        .populate('creator', 'name email')
         .sort({ menuDate: -1, mealType: 1 });
 
       res.json({
@@ -48,7 +48,7 @@ const menuController = {
 
       const menu = await Menu.findById(menuId)
         .populate('items')
-        .populate('createdBy', 'name email');
+        .populate('creator', 'name email');
 
       if (!menu) {
         return res.status(404).json({
@@ -213,7 +213,9 @@ const menuController = {
           mealType: parentMenu ? parentMenu.mealType : 'UNKNOWN',
           // Frontend expects these fields, map them if needed or rely on direct property
           name: item.itemName,
-          dietaryType: item.dietaryType || (item.isVeg ? 'Veg' : 'Non-Veg'),
+          dietaryType: item.type, // Map 'type' from DB to 'dietaryType'
+          isVeg: item.type === 'Veg' || item.type === 'Vegan',
+          price: item.price.regular, // Flatten price
           ecoScore: item.ecoScore || item.nutritionalInfo?.ecoScore || 'C', // Prefer top-level
           isAvailable: item.isAvailable !== undefined ? item.isAvailable : true
         };
@@ -254,8 +256,11 @@ const menuController = {
   // Create a menu item (Admin only) - Improved to handle Menu creation automatically
   createMenuItem: async (req, res, next) => {
     try {
-      // Allow passing menuId OR (date + mealType)
-      let { menuId, date, mealType, itemName, price, isVeg, description, category, nutritionalInfo, portionSize, dietaryType, ecoScore, allergens } = req.body;
+      let { menuId, date, mealType, itemName, name, price, isVeg, description, category, nutritionalInfo, portionSize, dietaryType, ecoScore, allergens } = req.body;
+
+      // Map aliases
+      if (!itemName && name) itemName = name;
+      if (!category && mealType) category = mealType;
 
       // If no menuId, try to find or create one
       if (!menuId && date && mealType) {
@@ -292,29 +297,25 @@ const menuController = {
         });
       }
 
-      // Ensure dietaryType and isVeg are consistent
-      if (dietaryType && !isVeg) {
-        isVeg = ['Veg', 'Vegan', 'Jain'].includes(dietaryType);
-      }
+      // Map dietaryType to Schema 'type'
+      let itemType = 'Veg';
+      if (dietaryType) itemType = dietaryType;
+      else if (isVeg !== undefined) itemType = isVeg ? 'Veg' : 'Non-Veg';
 
-      // Map ecoScore into nutritionalInfo if provided separately (Legacy support)
-      // if (ecoScore) {
-      //   nutritionalInfo = { ...nutritionalInfo, ecoScore };
-      // }
+      // Map price to Schema structure
+      const priceObj = typeof price === 'object' ? price : { regular: Number(price) || 0 };
 
       const item = await MenuItem.create({
         menuId,
         itemName,
-        price,
-        isVeg,
+        price: priceObj,
+        type: itemType,
         description,
-        category: category?.toUpperCase(),
+        category: category?.charAt(0).toUpperCase() + category?.slice(1).toLowerCase(), // Ensure Title Case
         nutritionalInfo,
-        portionSize,
-        dietaryType,
         allergens,
         ecoScore,
-        isAvailable: true // Default to true on creation
+        isAvailable: true
       });
 
       res.status(201).json({
@@ -337,9 +338,27 @@ const menuController = {
       const { itemId } = req.params;
       const { itemName, isVeg, description, category, nutritionalInfo, price, portionSize, dietaryType, allergens, ecoScore, isAvailable } = req.body;
 
+      // Map fields
+      const updateData = {
+        itemName,
+        description,
+        nutritionalInfo,
+        allergens,
+        ecoScore,
+        isAvailable
+      };
+
+      if (category) updateData.category = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+      if (dietaryType) updateData.type = dietaryType;
+      else if (isVeg !== undefined) updateData.type = isVeg ? 'Veg' : 'Non-Veg';
+
+      if (price !== undefined) {
+        updateData.price = typeof price === 'object' ? price : { regular: Number(price) };
+      }
+
       const item = await MenuItem.findByIdAndUpdate(
         itemId,
-        { itemName, isVeg, description, category: category?.toUpperCase(), nutritionalInfo, price, portionSize, dietaryType, allergens, ecoScore, isAvailable },
+        updateData,
         { new: true, runValidators: true }
       );
 
@@ -386,36 +405,6 @@ const menuController = {
   // Legacy endpoint for backward compatibility (returns mock data)
   getMenu: async (req, res) => {
     try {
-<<<<<<< HEAD
-      // Check if DB has menus, otherwise return mock data
-      const menuCount = await Menu.countDocuments();
-
-      if (menuCount > 0) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const menus = await Menu.find({
-          menuDate: { $gte: today },
-          isActive: true
-        }).populate('items');
-
-        const items = menus.flatMap(m => m.items || []);
-        return res.json(items);
-      }
-
-      // Legacy mock data for backwards compatibility
-      const MENU_ITEMS = [
-        { id: '1', name: 'Masala Dosa', price: { regular: 60 }, category: 'Breakfast', type: 'Veg', isJain: true, allergens: [], ecoScore: 85, imageColor: 'bg-orange-100' },
-        { id: '2', name: 'Idli Sambar', price: { small: 30, regular: 50 }, category: 'Breakfast', type: 'Veg', isJain: true, allergens: [], ecoScore: 90, imageColor: 'bg-gray-100' },
-        { id: '3', name: 'Chicken Biryani', price: { small: 120, regular: 180 }, category: 'Lunch', type: 'Non-Veg', isJain: false, allergens: [], ecoScore: 40, imageColor: 'bg-red-100' },
-        { id: '4', name: 'Veg Meals', price: { regular: 80 }, category: 'Lunch', type: 'Veg', isJain: true, allergens: ['Dairy'], ecoScore: 80, imageColor: 'bg-green-100' },
-        { id: '5', name: 'Paneer Butter Masala', price: { small: 90, regular: 150 }, category: 'Lunch', type: 'Veg', isJain: false, allergens: ['Dairy', 'Nuts'], ecoScore: 60, imageColor: 'bg-orange-50' },
-        { id: '6', name: 'Samosa', price: { regular: 20 }, category: 'Snacks', type: 'Veg', isJain: false, allergens: ['Gluten'], ecoScore: 75, imageColor: 'bg-yellow-100' },
-        { id: '7', name: 'Vegan Salad', price: { regular: 120 }, category: 'Lunch', type: 'Vegan', isJain: true, allergens: [], ecoScore: 95, imageColor: 'bg-green-50' },
-      ];
-
-      res.json(MENU_ITEMS);
-=======
       // Check if DB has items, otherwise seed default items
       const count = await MenuItem.countDocuments();
 
@@ -435,7 +424,7 @@ const menuController = {
       // Return all items
       const items = await MenuItem.find({}).sort({ category: 1, itemName: 1 });
       res.json(items);
->>>>>>> 0ca20192c0a6fb1760a6c42ccf9424991aa20e79
+
     } catch (error) {
       console.error('Error fetching menu:', error);
       res.status(500).json({ message: 'Error fetching menu', error: error.message });

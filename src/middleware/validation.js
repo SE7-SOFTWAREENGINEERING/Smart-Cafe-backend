@@ -56,6 +56,7 @@ const schemas = {
   booking: Joi.object({
     slot_time: Joi.date().iso().required(),
     meal_type: Joi.string().valid('Breakfast', 'Lunch', 'Snacks', 'Dinner').required(),
+    canteen: Joi.string().valid('Sopanam', 'Prasada', 'Samudra').required(),
     items: Joi.array().items(Joi.string()).default([])
   }),
 

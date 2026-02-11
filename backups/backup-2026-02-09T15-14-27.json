@@ -1,0 +1,92 @@
+{
+  "users": [
+    {
+      "_id": "6988be282c9c417650652ef2",
+      "user_id": 2,
+      "name": "mokii",
+      "email": "ms@gmail.com",
+      "password": "$2b$10$rh/CHBG0tnNZnYC5Ewgb0ORKASIvc.bIPfvBsZROUmSTpmyQiuyG.",
+      "otp": null,
+      "otp_expires": null,
+      "is_verified": false,
+      "role": "Admin",
+      "status": "Active",
+      "created_at": "2026-02-08T16:47:36.962Z",
+      "__v": 0
+    },
+    {
+      "_id": "6988cb744832b9355f7b0956",
+      "user_id": 3,
+      "name": "mokiths",
+      "email": "s@gmail.com",
+      "password": "$2b$10$WLwJ1ji5C2/9vgbMmYDpGOxJF3dUvUPILfL0MpPk4swRqcaDaKSIG",
+      "otp": null,
+      "otp_expires": null,
+      "is_verified": false,
+      "role": "CanteenStaff",
+      "status": "Active",
+      "created_at": "2026-02-08T17:44:20.042Z",
+      "__v": 0
+    },
+    {
+      "_id": "6988cf188375a94692166e38",
+      "user_id": 4,
+      "name": "jh",
+      "email": "ts@gmail.com",
+      "password": "$2b$10$nyppRFbhmavKLDwg9T.LZ.eagDHUdvFleWcd4FWFvcYe4lwqyyMQW",
+      "otp": null,
+      "otp_expires": null,
+      "is_verified": false,
+      "role": "User",
+      "status": "Active",
+      "created_at": "2026-02-08T17:59:52.086Z",
+      "__v": 0
+    },
+    {
+      "_id": "6989f996c8e14236d1f8f71c",
+      "user_id": 5,
+      "name": "Test Admin",
+      "email": "testadmin_1770650005261@test.com",
+      "password": "$2b$10$e6yjATNLMLcpOHvdNTohFO4ewFK3sq/xusgVaMhuHuGiC/Ob/Dj8G",
+      "otp": null,
+      "otp_expires": null,
+      "is_verified": false,
+      "role": "Admin",
+      "status": "Active",
+      "created_at": "2026-02-09T15:13:26.195Z",
+      "__v": 0
+    }
+  ],
+  "bookings": [],
+  "settings": [
+    {
+      "_id": "6988e4c3aa6bcde780282044",
+      "settingKey": "CAPACITY_CONFIG",
+      "__v": 0,
+      "category": "CAPACITY",
+      "createdAt": "2026-02-08T19:32:19.775Z",
+      "dataType": "JSON",
+      "description": "Capacity and Fairness Rules",
+      "isEditable": true,
+      "settingValue": "{\"maxBookingsPerStudent\":2,\"peakBookingWindow\":30,\"tokenExpiryDuration\":60,\"noShowGracePeriod\":15,\"noShowPenaltyDays\":7,\"ricePortionLimit\":250,\"curryPortionLimit\":150,\"maxCapacityPerSlot\":100,\"reservedFaculty\":50,\"reservedGuests\":20,\"maxCapacity\":100,\"reservationLimit\":80,\"buffer\":10}",
+      "updatedAt": "2026-02-08T19:32:19.775Z",
+      "updatedBy": 2,
+      "id": "6988e4c3aa6bcde780282044"
+    },
+    {
+      "_id": "6989f9d0aa6bcde780282045",
+      "settingKey": "SYSTEM_CONTROL",
+      "__v": 0,
+      "category": "SECURITY",
+      "createdAt": "2026-02-09T15:14:24.561Z",
+      "dataType": "JSON",
+      "description": "Master system controls",
+      "isEditable": true,
+      "settingValue": "{\"systemActive\":true,\"autoBackupEnabled\":false}",
+      "updatedAt": "2026-02-09T15:14:24.561Z",
+      "updatedBy": 2,
+      "id": "6989f9d0aa6bcde780282045"
+    }
+  ],
+  "capacity": []
+}

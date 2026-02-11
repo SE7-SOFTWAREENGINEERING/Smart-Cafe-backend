@@ -1,73 +1,99 @@
-require('dotenv').config();
 const mongoose = require('mongoose');
-const { Menu, MealSlot, Capacity } = require('../models');
+require('dotenv').config();
 
-const seedSlots = async () => {
+const Capacity = require('../models/Capacity');
+
+const CANTEENS = ['Sopanam', 'Prasada', 'Samudra'];
+const MEAL_TYPES = ['Breakfast', 'Lunch', 'Snacks', 'Dinner'];
+
+// Typical meal time slots
+const MEAL_TIMES = {
+    Breakfast: [
+        { hour: 7, minute: 0 },
+        { hour: 7, minute: 30 },
+        { hour: 8, minute: 0 },
+        { hour: 8, minute: 30 }
+    ],
+    Lunch: [
+        { hour: 12, minute: 0 },
+        { hour: 12, minute: 30 },
+        { hour: 13, minute: 0 },
+        { hour: 13, minute: 30 }
+    ],
+    Snacks: [
+        { hour: 16, minute: 0 },
+        { hour: 16, minute: 30 },
+        { hour: 17, minute: 0 }
+    ],
+    Dinner: [
+        { hour: 19, minute: 0 },
+        { hour: 19, minute: 30 },
+        { hour: 20, minute: 0 },
+        { hour: 20, minute: 30 }
+    ]
+};
+
+async function seedSlots() {
     try {
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smart-cafe');
-        console.log('Connected to MongoDB');
+        console.log('Connecting to MongoDB...');
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smart-cafeteria');
+        console.log('✅ Connected to MongoDB');
 
+        // Clear existing capacity data
+        console.log('Clearing existing slots...');
+        await Capacity.deleteMany({});
+        console.log('✅ Cleared existing slots');
+
+        const slots = [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        let menu = await Menu.findOne({ menuDate: today });
-        if (!menu) {
-            console.log('Creating menu for today...');
-            menu = await Menu.create({
-                menuDate: today,
-                mealType: 'LUNCH',
-                items: [], // Items added separately
-                isActive: true
-            });
-        }
+        let capacityId = 1;
 
-        console.log(`Using Menu ID: ${menu._id}`);
+        // Generate slots for next 7 days
+        for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() + dayOffset);
 
-        // Define slots
-        const slotsToCreate = [
-            { slotStart: '12:00', slotEnd: '12:15', maxCapacity: 50 },
-            { slotStart: '12:15', slotEnd: '12:30', maxCapacity: 50 },
-            { slotStart: '12:30', slotEnd: '12:45', maxCapacity: 50 },
-            { slotStart: '12:45', slotEnd: '13:00', maxCapacity: 50 },
-            { slotStart: '13:00', slotEnd: '13:15', maxCapacity: 50 },
-        ];
+            for (const canteen of CANTEENS) {
+                for (const mealType of MEAL_TYPES) {
+                    const timeSlots = MEAL_TIMES[mealType];
 
-        // Clear existing slots for this menu
-        await Capacity.deleteMany({
-            slot_time: {
-                $gte: new Date(today.setHours(0, 0, 0, 0)),
-                $lte: new Date(today.setHours(23, 59, 59, 999))
+                    for (const timeSlot of timeSlots) {
+                        const slotTime = new Date(date);
+                        slotTime.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
+
+                        slots.push({
+                            capacity_id: capacityId++,
+                            slot_time: slotTime,
+                            max_capacity: 50, // 50 slots per time slot
+                            canteen: canteen,
+                            isActive: true,
+                            isCancelled: false
+                        });
+                    }
+                }
             }
-        });
-
-        for (const s of slotsToCreate) {
-            const [startHour, startMin] = s.slotStart.split(':').map(Number);
-            const slotTime = new Date(today);
-            slotTime.setHours(startHour, startMin, 0, 0);
-
-            // Find last ID
-            const lastC = await Capacity.findOne().sort({ capacity_id: -1 });
-            const nextId = lastC ? lastC.capacity_id + 1 : 1;
-
-            await Capacity.create({
-                capacity_id: nextId, // Needs unique ID handling if parallel, but simple here
-                slot_time: slotTime,
-                max_capacity: s.maxCapacity,
-                isActive: true,
-                isCancelled: false
-            });
-            // Also need to update nextId for loop? 
-            // Better to fetch or increment locally?
-            // Since this is a seed script, safe to assume sequential execution.
         }
 
-        console.log(`Created ${slotsToCreate.length} slots for today.`);
+        console.log(`Creating ${slots.length} slots...`);
+        await Capacity.insertMany(slots);
+        console.log(`✅ Successfully created ${slots.length} booking slots!`);
 
+        console.log('\nSlot Distribution:');
+        console.log(`- Days: 7 (${today.toDateString()} to ${new Date(today.getTime() + 6 * 24 * 60 * 60 * 1000).toDateString()})`);
+        console.log(`- Canteens: ${CANTEENS.join(', ')}`);
+        console.log(`- Meal Types: ${MEAL_TYPES.join(', ')}`);
+        console.log(`- Total Slots: ${slots.length}`);
+        console.log(`- Capacity per slot: 50`);
+
+        await mongoose.connection.close();
+        console.log('\n✅ Database connection closed');
+        process.exit(0);
     } catch (error) {
-        console.error('Error:', error);
-    } finally {
-        await mongoose.disconnect();
+        console.error('❌ Error seeding slots:', error);
+        process.exit(1);
     }
-};
+}
 
 seedSlots();

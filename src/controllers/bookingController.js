@@ -17,9 +17,6 @@ const bookingController = {
     console.log('Request Body:', req.body);
     console.log('User Context:', req.user);
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
       const { slot_time, meal_type, canteen, items } = req.body;
       const userId = req.user.userId;
@@ -28,17 +25,15 @@ const bookingController = {
       const selectedCanteen = canteen || 'Sopanam';
 
       if (slotTime <= now) {
-        await session.abortTransaction();
         return res.status(400).json({ success: false, message: 'Cannot book slots in the past' });
       }
 
       // Check against Holiday/Maintenance Dates
-      const holidaySetting = await SystemSettings.findOne({ settingKey: `HOLIDAY_DATES_${selectedCanteen.toUpperCase()}` }).session(session);
+      const holidaySetting = await SystemSettings.findOne({ settingKey: `HOLIDAY_DATES_${selectedCanteen.toUpperCase()}` });
       if (holidaySetting) {
         const blockedDates = JSON.parse(holidaySetting.settingValue); // ['2024-03-25', ...]
         const bookingDateStr = slotTime.toISOString().split('T')[0];
         if (blockedDates.includes(bookingDateStr)) {
-          await session.abortTransaction();
           return res.status(400).json({
             success: false,
             message: `${selectedCanteen} is closed for maintenance/holiday on this date.`
@@ -51,7 +46,7 @@ const bookingController = {
         user_id: userId,
         slot_time: slotTime,
         status: 'Booked'
-      }).session(session);
+      });
 
       console.log('🔍 Duplicate check:', {
         userId,
@@ -64,7 +59,6 @@ const bookingController = {
       });
 
       if (existingBooking) {
-        await session.abortTransaction();
         return res.status(409).json({
           success: false,
           message: 'You already have a booking for this slot'
@@ -75,10 +69,9 @@ const bookingController = {
       const capacity = await Capacity.findOne({
         slot_time: slotTime,
         canteen: selectedCanteen
-      }).session(session);
+      });
 
       if (!capacity) {
-        await session.abortTransaction();
         return res.status(400).json({
           success: false,
           message: 'No capacity configured for this slot'
@@ -89,10 +82,9 @@ const bookingController = {
       const bookingsCount = await Booking.countDocuments({
         slot_time: slotTime,
         status: 'Booked'
-      }).session(session);
+      });
 
       if (bookingsCount >= capacity.max_capacity) {
-        await session.abortTransaction();
         return res.status(400).json({
           success: false,
           message: 'This slot is full. Please choose another time.'
@@ -100,11 +92,11 @@ const bookingController = {
       }
 
       // Get user priority status
-      const user = await User.findOne({ user_id: userId }).session(session);
+      const user = await User.findOne({ user_id: userId });
       const isPriority = user ? ['Staff', 'Admin', 'Manager'].includes(user.role) : false;
 
       // Generate IDs
-      const lastBooking = await Booking.findOne().sort({ booking_id: -1 }).session(session);
+      const lastBooking = await Booking.findOne().sort({ booking_id: -1 });
       const nextBookingId = lastBooking ? lastBooking.booking_id + 1 : 1;
 
       console.log('📝 Creating Booking Document...');
@@ -122,20 +114,20 @@ const bookingController = {
       console.log('Payload:', bookingData);
 
       // Create booking
-      const newBooking = await Booking.create([bookingData], { session });
-      const bookingDoc = newBooking[0];
+      const newBooking = await Booking.create(bookingData);
+      const bookingDoc = newBooking;
       console.log('✅ Booking Document Saved:', bookingDoc);
 
       // Recalculate queue positions for this slot based on created_at timestamp
       const allBookingsForSlot = await Booking.find({
         slot_time: slotTime,
         status: 'Booked'
-      }).sort({ is_priority_slot: -1, created_at: 1 }).session(session); // Priority first, then by creation time
+      }).sort({ is_priority_slot: -1, created_at: 1 }); // Priority first, then by creation time
 
       // Assign queue positions
       for (let i = 0; i < allBookingsForSlot.length; i++) {
         allBookingsForSlot[i].queue_position = i + 1;
-        await allBookingsForSlot[i].save({ session });
+        await allBookingsForSlot[i].save();
       }
 
       console.log(`✅ Queue positions recalculated. User position: ${bookingDoc.queue_position}`);
@@ -147,36 +139,33 @@ const bookingController = {
       const expiresAt = new Date(slotTime);
       expiresAt.setMinutes(expiresAt.getMinutes() + expiryMinutes);
 
-      const lastToken = await Token.findOne().sort({ token_id: -1 }).session(session);
+      const lastToken = await Token.findOne().sort({ token_id: -1 });
       const nextTokenId = lastToken ? lastToken.token_id + 1 : 1;
 
-      const newToken = await Token.create([{
+      const newToken = await Token.create({
         token_id: nextTokenId,
         booking_id: bookingDoc.booking_id,
         qr_code: tokenString,
         status: 'Active',
         expires_at: expiresAt
-      }], { session });
+      });
 
-      const tokenDoc = newToken[0];
+      const tokenDoc = newToken;
 
       // Create Notification
-      const lastNotif = await Notification.findOne().sort({ notification_id: -1 }).session(session);
+      const lastNotif = await Notification.findOne().sort({ notification_id: -1 });
       const nextNotifId = lastNotif ? lastNotif.notification_id + 1 : 1;
 
-      const notification = await Notification.create([{
+      const notification = await Notification.create({
         notification_id: nextNotifId,
         user_id: userId,
         message: `Booking confirmed! Your ${meal_type} slot is at ${slotTime.toLocaleTimeString()}. Token: ${tokenString.substring(0, 8)}`,
         notification_type: 'Reminder',
         booking_id: bookingDoc.booking_id
-      }], { session });
+      });
 
-      await session.commitTransaction();
-      session.endSession();
-
-      // Send real-time notification via WebSocket (outside transaction)
-      sendNotificationToUser(userId, notification[0]);
+      // Send real-time notification via WebSocket
+      sendNotificationToUser(userId, notification);
 
       res.status(201).json({
         success: true,
@@ -199,8 +188,6 @@ const bookingController = {
       });
 
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
       if (error.message.includes('past')) {
         return res.status(400).json({ success: false, message: error.message });
       }
