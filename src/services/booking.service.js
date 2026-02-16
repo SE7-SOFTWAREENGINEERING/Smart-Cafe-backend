@@ -929,3 +929,4 @@ module.exports = {
   getScanHistory,
   getQueueInfo,
 };
+
