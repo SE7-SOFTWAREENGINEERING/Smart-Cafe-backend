@@ -296,4 +296,3 @@ module.exports = {
   getMonthlySummary,
   getSettlementReport,
 };
-
