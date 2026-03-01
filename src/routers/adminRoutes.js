@@ -18,19 +18,7 @@ router.post('/users', adminController.createUser);
 router.delete('/users/:userId', adminController.deleteUser);
 router.patch('/users/:userId/status', adminController.updateUserStatus);
 
-// Cafeteria timings
-router.get('/timings', adminController.getCafeteriaTimings);
-router.post('/timings',
-  validateRequest(schemas.cafeteriaTiming),
-  adminController.setCafeteriaTiming
-);
-
-// Capacity management
-router.post('/capacity',
-  validateRequest(schemas.capacity),
-  adminController.setSlotCapacity
-);
-router.post('/capacity/bulk', adminController.bulkCreateCapacity);
+// Removed orphaned cafeteria timings and capacity endpoints.
 
 // System statistics
 router.get('/stats', adminController.getSystemStats);
