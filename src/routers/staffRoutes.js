@@ -15,12 +15,18 @@ router.post('/scan-token', staffController.scanToken);
 router.post('/walk-in-token', staffController.issueWalkInToken);
 
 // Emergency announcements
-router.post('/announcement', 
+router.post('/announcement',
   validateRequest(schemas.announcement),
   staffController.sendAnnouncement
 );
 
 // Queue monitoring
 router.get('/queue-status', staffController.getQueueStatus);
+router.get('/live-queue', staffController.getLiveQueue);
+router.put('/queue/:bookingId/status', staffController.updateQueueStatus);
+
+// Dashboard data
+router.get('/announcements', staffController.getAnnouncements);
+router.get('/occupancy', staffController.getOccupancy);
 
 module.exports = router;

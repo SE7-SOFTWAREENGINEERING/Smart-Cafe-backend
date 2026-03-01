@@ -205,39 +205,60 @@ const systemController = {
   // Get audit logs
   getAuditLogs: async (req, res, next) => {
     try {
-      // Mock logs for now or fetch from a real AuditLog model if it exists
-      // Assuming we might have a simple log collection or just return mocks
-      /* 
+      const AuditLog = require('../models/AuditLog');
       const logs = await AuditLog.find()
-        .sort({ createdAt: -1 })
+        .sort({ loggedAt: -1 })
         .limit(50)
-        .populate('userId', 'email role');
-      */
+        .populate('userId', 'email role name');
 
-      // Returning mock for now as per previous context or if model is missing
-      const logs = [
-        { _id: '1', action: 'System Backup', user: 'System', details: 'Automated daily backup', createdAt: new Date() },
-        { _id: '2', action: 'User Login', user: 'admin@smartcafe.com', details: 'Admin login', createdAt: new Date(Date.now() - 3600000) }
-      ];
+      const formattedLogs = logs.map(log => ({
+        _id: log._id,
+        action: log.action,
+        user: log.userId ? (log.userId.email || log.userId.name) : 'System',
+        details: `${log.method || ''} on ${log.entity}`.trim(),
+        createdAt: log.loggedAt,
+        status: log.status
+      }));
 
       res.json({
         success: true,
-        data: logs
+        data: formattedLogs
       });
     } catch (error) {
       next(error);
     }
   },
 
-  // Get backup history (Mock)
+  // Get backup history
   getBackups: async (req, res, next) => {
-    res.json({
-      success: true,
-      data: [
-        { id: 'BK-2024-001', date: '2024-03-15 02:00 AM', size: '1.2 GB', type: 'Automated', status: 'Success' },
-        { id: 'BK-2024-002', date: '2024-03-14 02:00 AM', size: '1.2 GB', type: 'Automated', status: 'Success' }
-      ]
-    });
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const backupDir = path.join(__dirname, '../../backups');
+
+      let backups = [];
+      if (fs.existsSync(backupDir)) {
+        const files = fs.readdirSync(backupDir);
+        backups = files.filter(f => f.endsWith('.json')).map((file, index) => {
+          const stats = fs.statSync(path.join(backupDir, file));
+          const sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
+          return {
+            id: `BK-${file.replace('.json', '')}`,
+            date: stats.mtime.toLocaleString(),
+            size: `${sizeMB} MB`,
+            type: file.includes('auto') ? 'Automated' : 'Manual',
+            status: 'Success'
+          };
+        }).sort((a, b) => new Date(b.date) - new Date(a.date));
+      }
+
+      res.json({
+        success: true,
+        data: backups
+      });
+    } catch (error) {
+      next(error);
+    }
   },
 
   // Trigger backup (Real JSON Dump)
@@ -282,30 +303,50 @@ const systemController = {
     }
   },
 
-  // Get Analytics (Simple aggregation from Bookings/Users to replace Python)
+  // Get Analytics
   getAnalytics: async (req, res, next) => {
     try {
       const Booking = require('../models/Booking');
 
-      // Simple counts
+      // Total counts
       const totalBookings = await Booking.countDocuments();
 
-      // Mock chart data for now as we might not have enough history
-      const chartData = [
-        { day: 'Mon', actual: 120, predicted: 130 },
-        { day: 'Tue', actual: 145, predicted: 140 },
-        { day: 'Wed', actual: 160, predicted: 155 },
-        { day: 'Thu', actual: 130, predicted: 145 },
-        { day: 'Fri', actual: 180, predicted: 170 },
-        { day: 'Sat', actual: 90, predicted: 100 },
-        { day: 'Sun', actual: 85, predicted: 80 },
-      ];
+      // Aggregate bookings by day for the last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+
+      const dailyBookings = await Booking.aggregate([
+        { $match: { created_at: { $gte: sevenDaysAgo } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$created_at' } },
+            actual: { $sum: 1 }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]);
+
+      const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+      const chartData = dailyBookings.map(day => {
+        const dateObj = new Date(day._id);
+        return {
+          day: daysOfWeek[dateObj.getDay()],
+          actual: day.actual,
+          predicted: Math.round(day.actual * 1.1) // Simple placeholder for predicted
+        };
+      });
+
+      // Calculate an average demand based on actual days returned
+      const totalActual = chartData.reduce((sum, item) => sum + item.actual, 0);
+      const averageDemand = chartData.length > 0 ? Math.round(totalActual / chartData.length) : 0;
 
       res.json({
         success: true,
         data: {
           total_records: totalBookings,
-          average_demand: 145,
+          average_demand: averageDemand,
           metrics: {
             mape: 12.5,
             rmse: 8.4
@@ -316,7 +357,9 @@ const systemController = {
             { factor: 'Weather', importance: 0.15 },
             { factor: 'Exam Schedule', importance: 0.10 }
           ],
-          chart_data: chartData
+          chart_data: chartData.length > 0 ? chartData : [
+            { day: 'Mon', actual: 0, predicted: 0 }
+          ]
         }
       });
     } catch (error) {
