@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const ROLES = ['user', 'canteen_staff', 'manager', 'admin'];
+const ROLES = ['user', 'canteen_staff', 'kitchen_staff', 'counter_staff', 'manager', 'admin'];
 const STATUS = ['active', 'suspended'];
 
 const userSchema = new mongoose.Schema(
@@ -96,7 +96,7 @@ userSchema.index({ status: 1 });
 // Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
+
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
   next();
@@ -118,10 +118,10 @@ userSchema.methods.isOtpValid = function (otp) {
 userSchema.statics.findByCredentials = async function (email, password) {
   const user = await this.findOne({ email }).select('+password');
   if (!user) return null;
-  
+
   const isMatch = await user.comparePassword(password);
   if (!isMatch) return null;
-  
+
   return user;
 };
 

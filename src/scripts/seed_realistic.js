@@ -28,17 +28,23 @@ const seedRealisticData = async () => {
         console.log('Cleared existing data');
 
         // 1. Create Canteens
-        const canteen = await Canteen.create({
-            name: 'Smart Cafe Main',
-            location: 'Admin Building, Ground Floor',
-            status: 'Open',
-            crowd: 'Medium',
-            capacity: 150,
-            occupancy: 45,
-            description: 'The primary dining hall with high-speed service.',
-            imageColor: 'bg-orange-100'
-        });
-        const canteenIdStr = canteen._id.toString();
+        const canteenNames = ["Sopanam", "Prasada", "Samudra"];
+        const createdCanteens = [];
+        for (const name of canteenNames) {
+            const canteen = await Canteen.create({
+                name: name,
+                location: 'Campus',
+                status: 'Open',
+                crowd: 'Medium',
+                capacity: 150,
+                occupancy: Math.floor(Math.random() * 50),
+                description: `${name} dining area.`,
+                imageColor: 'bg-orange-100'
+            });
+            createdCanteens.push(canteen);
+        }
+        const canteenIds = createdCanteens.map(c => c._id);
+        const canteenIdStrs = createdCanteens.map(c => c._id.toString());
 
         // 2. Create Users
         const hashedPassword = await bcrypt.hash('password123', 12);
@@ -47,12 +53,12 @@ const seedRealisticData = async () => {
 
         // 3. Create Menu Items
         const menuItems = await MenuItem.create([
-            { itemName: 'Butter Chicken', price: 150, isVeg: false, category: 'LUNCH', dietaryType: 'Non-Veg', isAvailable: true, canteens: [canteen._id] },
-            { itemName: 'Paneer Tikka', price: 120, isVeg: true, category: 'LUNCH', dietaryType: 'Veg', isAvailable: true, canteens: [canteen._id] },
-            { itemName: 'Dal Tadka', price: 80, isVeg: true, category: 'DINNER', dietaryType: 'Veg', isAvailable: true, canteens: [canteen._id] },
-            { itemName: 'Masala Dosa', price: 60, isVeg: true, category: 'BREAKFAST', dietaryType: 'Veg', isAvailable: true, canteens: [canteen._id] },
-            { itemName: 'Cold Coffee', price: 40, isVeg: true, category: 'BEVERAGES', dietaryType: 'Veg', isAvailable: true, canteens: [canteen._id] },
-            { itemName: 'Samosa', price: 15, isVeg: true, category: 'SNACKS', dietaryType: 'Veg', isAvailable: true, canteens: [canteen._id] }
+            { itemName: 'Butter Chicken', price: 150, isVeg: false, category: 'LUNCH', dietaryType: 'Non-Veg', isAvailable: true, canteens: canteenIds },
+            { itemName: 'Paneer Tikka', price: 120, isVeg: true, category: 'LUNCH', dietaryType: 'Veg', isAvailable: true, canteens: canteenIds },
+            { itemName: 'Dal Tadka', price: 80, isVeg: true, category: 'DINNER', dietaryType: 'Veg', isAvailable: true, canteens: canteenIds },
+            { itemName: 'Masala Dosa', price: 60, isVeg: true, category: 'BREAKFAST', dietaryType: 'Veg', isAvailable: true, canteens: canteenIds },
+            { itemName: 'Cold Coffee', price: 40, isVeg: true, category: 'BEVERAGES', dietaryType: 'Veg', isAvailable: true, canteens: canteenIds },
+            { itemName: 'Samosa', price: 15, isVeg: true, category: 'SNACKS', dietaryType: 'Veg', isAvailable: true, canteens: canteenIds }
         ]);
 
         // 4. Create Slots for Today
@@ -62,17 +68,19 @@ const seedRealisticData = async () => {
         const times = ['09:00', '13:00', '17:00', '20:00'];
 
         const slots = [];
-        for (let i = 0; i < meals.length; i++) {
-            const slot = await Slot.create({
-                date: todayStart,
-                time: times[i],
-                mealType: meals[i],
-                capacity: 100,
-                booked: 45,
-                status: 'Open',
-                canteenId: canteenIdStr
-            });
-            slots.push(slot);
+        for (const cStr of canteenIdStrs) {
+            for (let i = 0; i < meals.length; i++) {
+                const slot = await Slot.create({
+                    date: todayStart,
+                    time: times[i],
+                    mealType: meals[i],
+                    capacity: 100,
+                    booked: 45,
+                    status: 'Open',
+                    canteenId: cStr
+                });
+                slots.push(slot);
+            }
         }
 
         // 5. Create Financial Data
@@ -81,28 +89,30 @@ const seedRealisticData = async () => {
             const d = new Date();
             d.setDate(now.getDate() - i);
 
-            await FinancialTransaction.create({
-                transactionType: 'SALE',
-                amount: 2500 + (Math.random() * 2000),
-                description: 'Daily Aggregate Sales',
-                category: 'BOOKING',
-                paymentMethod: Math.random() > 0.5 ? 'UPI' : 'CASH',
-                status: 'COMPLETED',
-                date: d,
-                canteenId: canteenIdStr
-            });
-
-            if (i % 5 === 0) {
+            for (const cStr of canteenIdStrs) {
                 await FinancialTransaction.create({
-                    transactionType: 'EXPENSE',
-                    amount: -1200,
-                    description: 'Inventory Restock',
-                    category: 'STOCK_PURCHASE',
-                    paymentMethod: 'CASH',
+                    transactionType: 'SALE',
+                    amount: 2500 + (Math.random() * 2000),
+                    description: 'Daily Aggregate Sales',
+                    category: 'BOOKING',
+                    paymentMethod: Math.random() > 0.5 ? 'UPI' : 'CASH',
                     status: 'COMPLETED',
                     date: d,
-                    canteenId: canteenIdStr
+                    canteenId: cStr
                 });
+
+                if (i % 5 === 0) {
+                    await FinancialTransaction.create({
+                        transactionType: 'EXPENSE',
+                        amount: -1200,
+                        description: 'Inventory Restock',
+                        category: 'STOCK_PURCHASE',
+                        paymentMethod: 'CASH',
+                        status: 'COMPLETED',
+                        date: d,
+                        canteenId: cStr
+                    });
+                }
             }
         }
 

@@ -2,81 +2,78 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const config = require('../config');
-const { User, Menu, MenuItem, Slot, SystemSetting } = require('../models');
+const { User, Menu, MenuItem, Slot, SystemSetting, Canteen } = require('../models');
 
 const seedData = async () => {
   try {
     // Connect to database
     await mongoose.connect(config.mongodb.uri);
     console.log('Connected to MongoDB');
-    
+
     // Clear existing data (optional - comment out in production)
     await User.deleteMany({});
     await Menu.deleteMany({});
     await MenuItem.deleteMany({});
     await Slot.deleteMany({});
+    await Canteen.deleteMany({});
     console.log('Cleared existing data');
-    
+
     // Create admin user
-    const adminPassword = await bcrypt.hash('admin123', 12);
     const admin = await User.create({
       fullName: 'Admin User',
       email: 'admin@smartcafe.com',
-      password: adminPassword,
+      password: 'admin123',
       role: 'admin',
       status: 'active',
     });
     console.log('Created admin user:', admin.email);
-    
+
     // Create manager
-    const managerPassword = await bcrypt.hash('manager123', 12);
     const manager = await User.create({
       fullName: 'Manager User',
       email: 'manager@smartcafe.com',
-      password: managerPassword,
+      password: 'manager123',
       role: 'manager',
       status: 'active',
     });
     console.log('Created manager user:', manager.email);
-    
+
     // Create staff users
-    const staffPassword = await bcrypt.hash('staff123', 12);
     await User.create([
       {
         fullName: 'Canteen Staff',
         email: 'canteen@smartcafe.com',
-        password: staffPassword,
+        password: 'staff123',
         role: 'canteen_staff',
         status: 'active',
       },
       {
         fullName: 'Kitchen Staff',
         email: 'kitchen@smartcafe.com',
-        password: staffPassword,
+        password: 'staff123',
         role: 'kitchen_staff',
         status: 'active',
       },
       {
         fullName: 'Counter Staff',
         email: 'counter@smartcafe.com',
-        password: staffPassword,
+        password: 'staff123',
         role: 'counter_staff',
         status: 'active',
       },
     ]);
     console.log('Created staff users');
-    
+
     // Create student user
-    const studentPassword = await bcrypt.hash('student123', 12);
     await User.create({
       fullName: 'John Student',
       email: 'student@college.edu',
-      password: studentPassword,
+      password: 'student123',
       role: 'user',
       status: 'active',
     });
     console.log('Created student user');
-    
+
     // Create sample menu items
     const menuItems = await MenuItem.create([
       {
@@ -84,7 +81,7 @@ const seedData = async () => {
         description: 'Creamy tomato-based curry with tender chicken',
         price: 150,
         isVeg: false,
-        category: 'Non-Veg',
+        category: 'LUNCH',
         allergens: ['dairy', 'nuts'],
         ecoScore: 'C',
         portionSize: 'Regular',
@@ -96,7 +93,7 @@ const seedData = async () => {
         description: 'Grilled cottage cheese with spices',
         price: 120,
         isVeg: true,
-        category: 'Veg',
+        category: 'LUNCH',
         allergens: ['dairy'],
         ecoScore: 'B',
         portionSize: 'Regular',
@@ -108,7 +105,7 @@ const seedData = async () => {
         description: 'Creamy black lentils slow-cooked overnight',
         price: 80,
         isVeg: true,
-        category: 'Veg',
+        category: 'LUNCH',
         allergens: ['dairy'],
         ecoScore: 'A',
         portionSize: 'Regular',
@@ -120,7 +117,7 @@ const seedData = async () => {
         description: 'Fragrant rice with vegetables and spices',
         price: 100,
         isVeg: true,
-        category: 'Veg',
+        category: 'LUNCH',
         allergens: ['nuts'],
         ecoScore: 'B',
         portionSize: 'Large',
@@ -132,7 +129,7 @@ const seedData = async () => {
         description: 'Crispy crepe with spiced potato filling',
         price: 60,
         isVeg: true,
-        category: 'Veg',
+        category: 'LUNCH',
         allergens: [],
         ecoScore: 'A',
         portionSize: 'Regular',
@@ -141,11 +138,26 @@ const seedData = async () => {
       },
     ]);
     console.log('Created menu items');
-    
+
+    // Create Canteens
+    const canteenNames = ["Sopanam", "Prasada", "Samudra"];
+    const createdCanteens = [];
+    for (const name of canteenNames) {
+      const c = await Canteen.create({
+        name,
+        capacity: 150,
+        status: 'Open',
+        crowd: 'Low',
+        description: `${name} dining area.`,
+      });
+      createdCanteens.push(c);
+    }
+    console.log('Created canteens');
+
     // Create today's menu
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     await Menu.create({
       menuDate: today,
       mealType: 'LUNCH',
@@ -154,8 +166,8 @@ const seedData = async () => {
       createdBy: admin._id,
     });
     console.log('Created today\'s lunch menu');
-    
-    // Create time slots for today
+
+    // Create time slots for today across canteens
     const slots = [
       { time: '12:00 PM', capacity: 50 },
       { time: '12:30 PM', capacity: 50 },
@@ -163,25 +175,28 @@ const seedData = async () => {
       { time: '1:30 PM', capacity: 60 },
       { time: '2:00 PM', capacity: 40 },
     ];
-    
-    for (const slotData of slots) {
-      await Slot.create({
-        date: today,
-        time: slotData.time,
-        capacity: slotData.capacity,
-        mealType: 'LUNCH',
-        status: 'Open',
-      });
+
+    for (const c of createdCanteens) {
+      for (const slotData of slots) {
+        await Slot.create({
+          date: today,
+          time: slotData.time,
+          capacity: slotData.capacity,
+          mealType: 'LUNCH',
+          status: 'Open',
+          canteenId: c._id.toString(),
+        });
+      }
     }
-    console.log('Created time slots');
-    
+    console.log('Created time slots for all canteens');
+
     console.log('\n✅ Seed completed successfully!');
     console.log('\n📋 Test Credentials:');
     console.log('Admin: admin@smartcafe.com / admin123');
     console.log('Manager: manager@smartcafe.com / manager123');
     console.log('Staff: canteen@smartcafe.com / staff123');
     console.log('Student: student@college.edu / student123');
-    
+
     process.exit(0);
   } catch (error) {
     console.error('Seed failed:', error);
