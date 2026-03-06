@@ -582,14 +582,14 @@ const getBookingStats = async (date, canteenId) => {
 
   // Build match stage - lookup slot if canteenId filter is provided
   const pipeline = [];
-  
+
   // Match by date
   pipeline.push({
     $match: {
       createdAt: { $gte: start, $lte: end },
     },
   });
-  
+
   // If canteenId is provided, lookup slot and filter by canteenId
   if (canteenId) {
     pipeline.push(
@@ -609,23 +609,27 @@ const getBookingStats = async (date, canteenId) => {
       }
     );
   }
-  
+
   // Group by status
   pipeline.push({
     $group: {
       _id: "$status",
       count: { $sum: 1 },
       totalAmount: { $sum: "$totalAmount" },
+      walkinCount: {
+        $sum: { $cond: [{ $eq: ["$isWalkin", true] }, 1, 0] }
+      }
     },
   });
 
   const stats = await Booking.aggregate(pipeline);
 
   const totalBookings = stats.reduce((acc, s) => acc + s.count, 0);
+  const walkinCount = stats.reduce((acc, s) => acc + (s.walkinCount || 0), 0);
   const totalRevenue = stats
     .filter((s) => s._id === "completed")
     .reduce((acc, s) => acc + s.totalAmount, 0);
-  
+
   // Extract individual status counts for frontend compatibility
   const confirmed = stats.find(s => s._id === 'confirmed')?.count || 0;
   const completed = stats.find(s => s._id === 'completed')?.count || 0;
@@ -637,6 +641,7 @@ const getBookingStats = async (date, canteenId) => {
     total: totalBookings,
     totalBookings,
     totalRevenue,
+    walkinCount,
     confirmed,
     completed,
     cancelled,
