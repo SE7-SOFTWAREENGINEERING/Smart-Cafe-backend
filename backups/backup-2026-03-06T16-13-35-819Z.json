@@ -1,0 +1,657 @@
+{
+  "createdAt": "2026-03-06T16:13:35.898Z",
+  "meta": {
+    "triggeredBy": "69aae16e35aff19aeadf6a6a",
+    "source": "manual"
+  },
+  "data": {
+    "User": [
+      {
+        "_id": "6988be282c9c417650652ef2",
+        "user_id": 2,
+        "name": "mokii",
+        "email": "ms@gmail.com",
+        "otp_expires": null,
+        "is_verified": false,
+        "role": "Admin",
+        "status": "Active",
+        "created_at": "2026-02-08T16:47:36.962Z",
+        "__v": 0
+      },
+      {
+        "_id": "6988cb744832b9355f7b0956",
+        "user_id": 3,
+        "name": "mokiths",
+        "email": "s@gmail.com",
+        "otp_expires": null,
+        "is_verified": false,
+        "role": "CanteenStaff",
+        "status": "Active",
+        "created_at": "2026-02-08T17:44:20.042Z",
+        "__v": 0
+      },
+      {
+        "_id": "6988cf188375a94692166e38",
+        "user_id": 4,
+        "name": "jh",
+        "email": "ts@gmail.com",
+        "otp_expires": null,
+        "is_verified": false,
+        "role": "User",
+        "status": "Active",
+        "created_at": "2026-02-08T17:59:52.086Z",
+        "__v": 0
+      },
+      {
+        "_id": "698a0869329f8facbfd71e04",
+        "user_id": 5,
+        "name": "helo",
+        "email": "h@gmail.com",
+        "otp_expires": null,
+        "is_verified": false,
+        "role": "User",
+        "status": "Active",
+        "created_at": "2026-02-09T16:16:41.388Z",
+        "__v": 0
+      },
+      {
+        "_id": "698a09de329f8facbfd71e7a",
+        "user_id": 6,
+        "name": "Test Admin",
+        "email": "testadmin_1770654174191@test.com",
+        "otp_expires": null,
+        "is_verified": false,
+        "role": "Admin",
+        "status": "Active",
+        "created_at": "2026-02-09T16:22:54.332Z",
+        "__v": 0
+      },
+      {
+        "_id": "69a1b919c146b9051498ecdc",
+        "user_id": 7,
+        "name": "mokitha",
+        "email": "m@gmail.com",
+        "otp_expires": null,
+        "is_verified": false,
+        "role": "Admin",
+        "status": "Active",
+        "created_at": "2026-02-27T15:32:41.340Z",
+        "__v": 0
+      },
+      {
+        "_id": "69aae16e35aff19aeadf6a6a",
+        "fullName": "admin",
+        "email": "admin@gmail.com",
+        "role": "admin",
+        "status": "active",
+        "isOnline": true,
+        "avatar": null,
+        "canteenId": null,
+        "segment": "student",
+        "createdAt": "2026-03-06T14:15:10.727Z",
+        "updatedAt": "2026-03-06T14:15:10.727Z",
+        "__v": 0
+      }
+    ],
+    "Menu": [
+      {
+        "_id": "6989fb48c8e14236d1f8f787",
+        "menuDate": "2026-02-08T18:30:00.000Z",
+        "mealType": "LUNCH",
+        "isActive": true,
+        "createdBy": 5,
+        "createdAt": "2026-02-09T15:20:40.331Z",
+        "updatedAt": "2026-02-09T15:20:40.331Z",
+        "__v": 0
+      }
+    ],
+    "MenuItem": [
+      {
+        "_id": "698a0778329f8facbfd71d6f",
+        "menuId": "6989fb48c8e14236d1f8f787",
+        "itemName": "biryani",
+        "price": {
+          "regular": 100
+        },
+        "category": "Lunch",
+        "type": "Veg",
+        "isJain": false,
+        "allergens": [],
+        "tags": [],
+        "ecoScore": "B",
+        "imageColor": "bg-gray-100",
+        "isAvailable": true,
+        "createdAt": "2026-02-09T16:12:40.369Z",
+        "updatedAt": "2026-02-09T16:12:40.369Z",
+        "__v": 0
+      },
+      {
+        "_id": "698a0826329f8facbfd71d7a",
+        "menuId": "6989fb48c8e14236d1f8f787",
+        "itemName": "rice",
+        "price": {
+          "regular": 0
+        },
+        "category": "Lunch",
+        "type": "Veg",
+        "isJain": false,
+        "allergens": [],
+        "tags": [],
+        "ecoScore": "B",
+        "imageColor": "bg-gray-100",
+        "isAvailable": true,
+        "createdAt": "2026-02-09T16:15:34.381Z",
+        "updatedAt": "2026-02-09T16:15:34.381Z",
+        "__v": 0
+      }
+    ],
+    "Slot": [
+      {
+        "_id": "69aafca535aff19aeadf6cb1",
+        "date": "2026-03-06T00:00:00.000Z",
+        "time": "21:52",
+        "capacity": 200,
+        "booked": 0,
+        "status": "Open",
+        "mealType": "BREAKFAST",
+        "canteenId": "69aae4163cc8866dd22fca8e",
+        "createdAt": "2026-03-06T16:11:17.977Z",
+        "updatedAt": "2026-03-06T16:11:17.977Z",
+        "__v": 0
+      }
+    ],
+    "Booking": [],
+    "SystemSetting": [
+      {
+        "_id": "6988e4c3aa6bcde780282044",
+        "settingKey": "CAPACITY_CONFIG",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-02-08T19:32:19.775Z",
+        "dataType": "JSON",
+        "description": "Capacity and Fairness Rules",
+        "isEditable": true,
+        "settingValue": "{\"maxBookingsPerStudent\":1,\"peakBookingWindow\":10,\"tokenExpiryDuration\":9,\"noShowGracePeriod\":4,\"noShowPenaltyDays\":7,\"ricePortionLimit\":0,\"curryPortionLimit\":0,\"maxCapacityPerSlot\":11,\"reservedFaculty\":0,\"reservedGuests\":0,\"maxCapacity\":100,\"reservationLimit\":80,\"buffer\":10}",
+        "updatedAt": "2026-02-27T15:33:24.543Z",
+        "updatedBy": 7
+      },
+      {
+        "_id": "6989f9d0aa6bcde780282045",
+        "settingKey": "SYSTEM_CONTROL",
+        "__v": 0,
+        "category": "SECURITY",
+        "createdAt": "2026-02-09T15:14:24.561Z",
+        "dataType": "JSON",
+        "description": "Master system controls",
+        "isEditable": true,
+        "settingValue": "{\"systemActive\":true,\"autoBackupEnabled\":false}",
+        "updatedAt": "2026-02-09T15:14:24.561Z",
+        "updatedBy": 2
+      },
+      {
+        "_id": "6989fa9eaa6bcde780282046",
+        "settingKey": "TIMING_CONFIG_SOPANAM",
+        "__v": 0,
+        "category": "TIMINGS",
+        "createdAt": "2026-02-09T15:17:50.828Z",
+        "dataType": "JSON",
+        "description": "Weekly operating hours for Sopanam",
+        "isEditable": true,
+        "settingValue": "[{\"day\":\"Monday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Tuesday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Wednesday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Thursday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Friday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Saturday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Sunday\",\"isOpen\":false,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false}]",
+        "updatedAt": "2026-02-09T16:29:33.519Z",
+        "updatedBy": 2
+      },
+      {
+        "_id": "6989fa9eaa6bcde780282047",
+        "settingKey": "SERVICE_MODES_SOPANAM",
+        "__v": 0,
+        "category": "TIMINGS",
+        "createdAt": "2026-02-09T15:17:50.906Z",
+        "dataType": "JSON",
+        "description": "Active service modes for Sopanam",
+        "isEditable": true,
+        "settingValue": "{\"onlineBooking\":true,\"walkIn\":true}",
+        "updatedAt": "2026-02-09T16:29:33.536Z",
+        "updatedBy": 2
+      },
+      {
+        "_id": "6989fa9eaa6bcde780282048",
+        "settingKey": "SLOT_CONFIG_SOPANAM",
+        "__v": 0,
+        "category": "TIMINGS",
+        "createdAt": "2026-02-09T15:17:50.992Z",
+        "dataType": "STRING",
+        "description": "Slot duration for Sopanam",
+        "isEditable": true,
+        "settingValue": "10",
+        "updatedAt": "2026-02-09T16:29:33.570Z",
+        "updatedBy": 2
+      },
+      {
+        "_id": "6989fa9faa6bcde780282049",
+        "settingKey": "HOLIDAY_DATES_SOPANAM",
+        "__v": 0,
+        "category": "TIMINGS",
+        "createdAt": "2026-02-09T15:17:51.014Z",
+        "dataType": "JSON",
+        "description": "Blockout dates for Sopanam",
+        "isEditable": true,
+        "settingValue": "[]",
+        "updatedAt": "2026-02-09T16:29:33.612Z",
+        "updatedBy": 2
+      },
+      {
+        "_id": "69aade6a7c2e7e88872fa3cc",
+        "settingKey": "BOOKING_ENABLED",
+        "__v": 0,
+        "category": "BOOKING",
+        "createdAt": "2026-03-06T14:02:18.487Z",
+        "dataType": "BOOLEAN",
+        "description": "Master switch for booking system",
+        "isEditable": true,
+        "settingValue": "true",
+        "updatedAt": "2026-03-06T14:13:54.591Z"
+      },
+      {
+        "_id": "69aade6a7c2e7e88872fa3cd",
+        "settingKey": "DEFAULT_SLOT_CAPACITY",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-03-06T14:02:18.920Z",
+        "dataType": "NUMBER",
+        "description": "Default capacity for new slots",
+        "isEditable": true,
+        "settingValue": "50",
+        "updatedAt": "2026-03-06T14:13:54.672Z"
+      },
+      {
+        "_id": "69aade6a7c2e7e88872fa3ce",
+        "settingKey": "MAX_BOOKINGS_PER_USER",
+        "__v": 0,
+        "category": "BOOKING",
+        "createdAt": "2026-03-06T14:02:18.926Z",
+        "dataType": "NUMBER",
+        "description": "Maximum bookings per user per day",
+        "isEditable": true,
+        "settingValue": "3",
+        "updatedAt": "2026-03-06T14:13:54.676Z"
+      },
+      {
+        "_id": "69aade6a7c2e7e88872fa3cf",
+        "settingKey": "CANCELLATION_DEADLINE_MINUTES",
+        "__v": 0,
+        "category": "BOOKING",
+        "createdAt": "2026-03-06T14:02:18.930Z",
+        "dataType": "NUMBER",
+        "description": "Minutes before slot time when cancellation is allowed",
+        "isEditable": true,
+        "settingValue": "30",
+        "updatedAt": "2026-03-06T14:13:54.678Z"
+      },
+      {
+        "_id": "69aade6a7c2e7e88872fa3d0",
+        "settingKey": "MAX_BOOKINGS_PER_STUDENT_PER_DAY",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-03-06T14:02:18.934Z",
+        "dataType": "NUMBER",
+        "description": "Max bookings per student per day",
+        "isEditable": true,
+        "settingValue": "2",
+        "updatedAt": "2026-03-06T14:13:54.681Z"
+      },
+      {
+        "_id": "69aade6a7c2e7e88872fa3d1",
+        "settingKey": "PEAK_BOOKING_WINDOW_MINS",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-03-06T14:02:18.937Z",
+        "dataType": "NUMBER",
+        "description": "Peak booking window in minutes",
+        "isEditable": true,
+        "settingValue": "30",
+        "updatedAt": "2026-03-06T14:13:54.683Z"
+      },
+      {
+        "_id": "69aade6a7c2e7e88872fa3d2",
+        "settingKey": "TOKEN_EXPIRY_DURATION_MINS",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-03-06T14:02:18.940Z",
+        "dataType": "NUMBER",
+        "description": "Token expiry duration in minutes",
+        "isEditable": true,
+        "settingValue": "71",
+        "updatedAt": "2026-03-06T14:17:59.604Z"
+      },
+      {
+        "_id": "69aade6a7c2e7e88872fa3d3",
+        "settingKey": "NO_SHOW_GRACE_PERIOD_MINS",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-03-06T14:02:18.943Z",
+        "dataType": "NUMBER",
+        "description": "No-show grace period in minutes",
+        "isEditable": true,
+        "settingValue": "10",
+        "updatedAt": "2026-03-06T14:17:59.617Z"
+      },
+      {
+        "_id": "69aade6a7c2e7e88872fa3d4",
+        "settingKey": "NO_SHOW_PENALTY_DAYS",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-03-06T14:02:18.946Z",
+        "dataType": "NUMBER",
+        "description": "No-show penalty days",
+        "isEditable": true,
+        "settingValue": "2",
+        "updatedAt": "2026-03-06T14:17:59.626Z"
+      },
+      {
+        "_id": "69aae2177c2e7e88872fa3d5",
+        "settingKey": "RICE_PORTION_LIMIT_G",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-03-06T14:17:59.634Z",
+        "dataType": "NUMBER",
+        "description": "Rice portion limit in grams",
+        "isEditable": true,
+        "settingValue": "250",
+        "updatedAt": "2026-03-06T14:17:59.634Z"
+      },
+      {
+        "_id": "69aae2177c2e7e88872fa3d6",
+        "settingKey": "CURRY_PORTION_LIMIT_ML",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-03-06T14:17:59.644Z",
+        "dataType": "NUMBER",
+        "description": "Curry portion limit in ml",
+        "isEditable": true,
+        "settingValue": "150",
+        "updatedAt": "2026-03-06T14:17:59.644Z"
+      },
+      {
+        "_id": "69aae2177c2e7e88872fa3d7",
+        "settingKey": "MAX_CAPACITY_PER_SLOT",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-03-06T14:17:59.652Z",
+        "dataType": "NUMBER",
+        "description": "Maximum capacity per slot",
+        "isEditable": true,
+        "settingValue": "200",
+        "updatedAt": "2026-03-06T14:17:59.652Z"
+      },
+      {
+        "_id": "69aae2177c2e7e88872fa3d8",
+        "settingKey": "FACULTY_RESERVED_SLOTS",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-03-06T14:17:59.658Z",
+        "dataType": "NUMBER",
+        "description": "Faculty reserved slots",
+        "isEditable": true,
+        "settingValue": "50",
+        "updatedAt": "2026-03-06T14:17:59.658Z"
+      },
+      {
+        "_id": "69aae2177c2e7e88872fa3d9",
+        "settingKey": "GUEST_RESERVED_SLOTS",
+        "__v": 0,
+        "category": "CAPACITY",
+        "createdAt": "2026-03-06T14:17:59.668Z",
+        "dataType": "NUMBER",
+        "description": "Guest reserved slots",
+        "isEditable": true,
+        "settingValue": "20",
+        "updatedAt": "2026-03-06T14:17:59.668Z"
+      },
+      {
+        "_id": "69aafd137c2e7e88872fa3da",
+        "settingKey": "ONLINE_BOOKING_ENABLED",
+        "__v": 0,
+        "category": "BOOKING",
+        "createdAt": "2026-03-06T16:13:07.277Z",
+        "dataType": "BOOLEAN",
+        "description": "Enable or disable online booking",
+        "isEditable": true,
+        "settingValue": "true",
+        "updatedAt": "2026-03-06T16:13:08.653Z"
+      },
+      {
+        "_id": "69aafd167c2e7e88872fa3db",
+        "settingKey": "WALKIN_ENABLED",
+        "__v": 0,
+        "category": "BOOKING",
+        "createdAt": "2026-03-06T16:13:10.470Z",
+        "dataType": "BOOLEAN",
+        "description": "Enable or disable walk-in service",
+        "isEditable": true,
+        "settingValue": "true",
+        "updatedAt": "2026-03-06T16:13:11.434Z"
+      },
+      {
+        "_id": "69aafd1e7c2e7e88872fa3dc",
+        "settingKey": "SLOT_DURATION",
+        "__v": 0,
+        "category": "BOOKING",
+        "createdAt": "2026-03-06T16:13:18.787Z",
+        "dataType": "NUMBER",
+        "description": "Slot duration in minutes",
+        "isEditable": true,
+        "settingValue": "15",
+        "updatedAt": "2026-03-06T16:13:18.787Z"
+      },
+      {
+        "_id": "69aafd1e7c2e7e88872fa3dd",
+        "settingKey": "OPERATING_SCHEDULE",
+        "__v": 0,
+        "category": "BOOKING",
+        "createdAt": "2026-03-06T16:13:18.795Z",
+        "dataType": "JSON",
+        "description": "Operating schedule by day",
+        "isEditable": true,
+        "settingValue": "[{\"day\":\"Monday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Tuesday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Wednesday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Thursday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Friday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Saturday\",\"isOpen\":true,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false},{\"day\":\"Sunday\",\"isOpen\":false,\"openTime\":\"08:00\",\"closeTime\":\"20:00\",\"isHoliday\":false}]",
+        "updatedAt": "2026-03-06T16:13:18.795Z"
+      }
+    ],
+    "Notification": [],
+    "AuditLog": [
+      {
+        "_id": "69aafd1435aff19aeadf6d15",
+        "action": "Setting updated: ONLINE_BOOKING_ENABLED",
+        "user": "69aae16e35aff19aeadf6a6a",
+        "userName": "Admin",
+        "userRole": "admin",
+        "resource": "SystemSetting",
+        "details": {
+          "key": "ONLINE_BOOKING_ENABLED",
+          "previousValue": "false",
+          "newValue": "true"
+        },
+        "createdAt": "2026-03-06T16:13:08.662Z",
+        "updatedAt": "2026-03-06T16:13:08.662Z",
+        "__v": 0
+      },
+      {
+        "_id": "69aafd1735aff19aeadf6d1d",
+        "action": "Setting updated: WALKIN_ENABLED",
+        "user": "69aae16e35aff19aeadf6a6a",
+        "userName": "Admin",
+        "userRole": "admin",
+        "resource": "SystemSetting",
+        "details": {
+          "key": "WALKIN_ENABLED",
+          "previousValue": "false",
+          "newValue": "true"
+        },
+        "createdAt": "2026-03-06T16:13:11.439Z",
+        "updatedAt": "2026-03-06T16:13:11.439Z",
+        "__v": 0
+      },
+      {
+        "_id": "69aafd1e35aff19aeadf6d22",
+        "action": "Setting updated: ONLINE_BOOKING_ENABLED",
+        "user": "69aae16e35aff19aeadf6a6a",
+        "userName": "Admin",
+        "userRole": "admin",
+        "resource": "SystemSetting",
+        "details": {
+          "key": "ONLINE_BOOKING_ENABLED",
+          "previousValue": "true",
+          "newValue": "true"
+        },
+        "createdAt": "2026-03-06T16:13:18.764Z",
+        "updatedAt": "2026-03-06T16:13:18.764Z",
+        "__v": 0
+      },
+      {
+        "_id": "69aafd1e35aff19aeadf6d26",
+        "action": "Setting updated: WALKIN_ENABLED",
+        "user": "69aae16e35aff19aeadf6a6a",
+        "userName": "Admin",
+        "userRole": "admin",
+        "resource": "SystemSetting",
+        "details": {
+          "key": "WALKIN_ENABLED",
+          "previousValue": "true",
+          "newValue": "true"
+        },
+        "createdAt": "2026-03-06T16:13:18.779Z",
+        "updatedAt": "2026-03-06T16:13:18.779Z",
+        "__v": 0
+      }
+    ],
+    "Holiday": [],
+    "WasteReport": [],
+    "Forecast": [
+      {
+        "_id": "69aae17035aff19aeadf6a87",
+        "date": "2026-03-05T18:30:00.000Z",
+        "mealType": "BREAKFAST",
+        "predictedCount": 50,
+        "weatherCondition": "Unknown",
+        "isSpecialPeriod": false,
+        "specialPeriodType": "Normal",
+        "modelVersion": "v1.0",
+        "canteenId": "default",
+        "itemForecasts": [],
+        "createdAt": "2026-03-06T14:15:12.303Z",
+        "updatedAt": "2026-03-06T14:15:12.303Z",
+        "__v": 0
+      },
+      {
+        "_id": "69aae17035aff19aeadf6a89",
+        "date": "2026-03-05T18:30:00.000Z",
+        "mealType": "SNACKS",
+        "predictedCount": 50,
+        "weatherCondition": "Unknown",
+        "isSpecialPeriod": false,
+        "specialPeriodType": "Normal",
+        "modelVersion": "v1.0",
+        "canteenId": "default",
+        "itemForecasts": [],
+        "createdAt": "2026-03-06T14:15:12.313Z",
+        "updatedAt": "2026-03-06T14:15:12.313Z",
+        "__v": 0
+      },
+      {
+        "_id": "69aae17035aff19aeadf6a8b",
+        "date": "2026-03-05T18:30:00.000Z",
+        "mealType": "LUNCH",
+        "predictedCount": 50,
+        "weatherCondition": "Unknown",
+        "isSpecialPeriod": false,
+        "specialPeriodType": "Normal",
+        "modelVersion": "v1.0",
+        "canteenId": "default",
+        "itemForecasts": [],
+        "createdAt": "2026-03-06T14:15:12.320Z",
+        "updatedAt": "2026-03-06T14:15:12.320Z",
+        "__v": 0
+      },
+      {
+        "_id": "69aae17035aff19aeadf6a8d",
+        "date": "2026-03-05T18:30:00.000Z",
+        "mealType": "DINNER",
+        "predictedCount": 50,
+        "weatherCondition": "Unknown",
+        "isSpecialPeriod": false,
+        "specialPeriodType": "Normal",
+        "modelVersion": "v1.0",
+        "canteenId": "default",
+        "itemForecasts": [],
+        "createdAt": "2026-03-06T14:15:12.326Z",
+        "updatedAt": "2026-03-06T14:15:12.326Z",
+        "__v": 0
+      }
+    ],
+    "Canteen": [
+      {
+        "_id": "69aae4163cc8866dd22fca87",
+        "name": "Sopanam",
+        "location": "",
+        "status": "Open",
+        "crowd": "Low",
+        "capacity": 150,
+        "occupancy": 0,
+        "isActive": true,
+        "imageUrl": null,
+        "imageColor": "bg-orange-100",
+        "ecoScore": "B",
+        "description": "Sopanam dining area.",
+        "operatingHours": {
+          "open": "08:00",
+          "close": "20:00"
+        },
+        "createdAt": "2026-03-06T14:26:30.778Z",
+        "updatedAt": "2026-03-06T14:26:30.778Z",
+        "__v": 0
+      },
+      {
+        "_id": "69aae4163cc8866dd22fca8e",
+        "name": "Prasada",
+        "location": "",
+        "status": "Open",
+        "crowd": "Low",
+        "capacity": 150,
+        "occupancy": 0,
+        "isActive": true,
+        "imageUrl": null,
+        "imageColor": "bg-orange-100",
+        "ecoScore": "B",
+        "description": "Prasada dining area.",
+        "operatingHours": {
+          "open": "08:00",
+          "close": "20:00"
+        },
+        "createdAt": "2026-03-06T14:26:30.793Z",
+        "updatedAt": "2026-03-06T14:26:30.793Z",
+        "__v": 0
+      },
+      {
+        "_id": "69aae4163cc8866dd22fca91",
+        "name": "Samudra",
+        "location": "",
+        "status": "Open",
+        "crowd": "Low",
+        "capacity": 150,
+        "occupancy": 0,
+        "isActive": true,
+        "imageUrl": null,
+        "imageColor": "bg-orange-100",
+        "ecoScore": "B",
+        "description": "Samudra dining area.",
+        "operatingHours": {
+          "open": "08:00",
+          "close": "20:00"
+        },
+        "createdAt": "2026-03-06T14:26:30.799Z",
+        "updatedAt": "2026-03-06T14:26:30.799Z",
+        "__v": 0
+      }
+    ]
+  }
+}
