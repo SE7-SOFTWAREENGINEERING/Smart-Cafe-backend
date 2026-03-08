@@ -101,12 +101,12 @@ const getPublicSettings = async () => {
     operatingSchedule:
       typeof operatingSchedule === "string"
         ? (() => {
-            try {
-              return JSON.parse(operatingSchedule);
-            } catch {
-              return null;
-            }
-          })()
+          try {
+            return JSON.parse(operatingSchedule);
+          } catch {
+            return null;
+          }
+        })()
         : operatingSchedule || null,
     masterBookingEnabled: toBoolean(masterBookingEnabled, true),
     autoBackupEnabled: toBoolean(autoBackupEnabled, true),
@@ -420,8 +420,8 @@ const initializeDefaults = async () => {
   for (const setting of defaults) {
     await SystemSetting.findOneAndUpdate(
       { settingKey: setting.settingKey },
-      setting,
-      { upsert: true },
+      { $setOnInsert: setting },
+      { upsert: true, new: true },
     );
   }
 };

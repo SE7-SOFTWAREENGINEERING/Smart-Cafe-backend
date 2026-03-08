@@ -22,14 +22,7 @@ const wasteReportSchema = new mongoose.Schema(
     },
     reason: {
       type: String,
-      enum: [
-        'Too much food',
-        'Did not like the taste',
-        'Food was cold',
-        'Not hungry',
-        'Poor quality',
-        'Other',
-      ],
+      maxlength: 500,
     },
     notes: {
       type: String,

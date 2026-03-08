@@ -18,9 +18,21 @@ const app = express();
 // Security middleware
 app.use(helmet());
 
-// CORS
+// CORS - allow any localhost origin (handles Flutter web's dynamic ports)
 app.use(cors({
-  origin: config.frontendUrl,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (e.g. mobile apps, curl)
+    if (!origin) return callback(null, true);
+    // Allow any localhost origin regardless of port
+    if (/^http:\/\/localhost(:\d+)?$/.test(origin)) {
+      return callback(null, true);
+    }
+    // Also allow the configured frontend URL
+    if (origin === config.frontendUrl) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 

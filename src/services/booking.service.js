@@ -347,37 +347,20 @@ const createBooking = async (userId, data) => {
     const guestReserved = await getPolicyNumber("GUEST_RESERVED_SLOTS", 0);
     const totalReserved = facultyReserved + guestReserved;
 
-    // Calculate effective capacity for students
-    const studentCapacity = Math.max(0, slot.capacity - totalReserved);
+    // Only enforce the reservation restriction when a policy is actually configured
+    if (totalReserved > 0) {
+      // Calculate effective capacity for students
+      const studentCapacity = Math.max(0, slot.capacity - totalReserved);
 
-    if (slot.booked >= studentCapacity) {
-      throw ApiError.badRequest("Slot is full (Reserved slots are for Faculty/Guests only)");
+      if (slot.booked >= studentCapacity) {
+        throw ApiError.badRequest("Slot is full (Reserved slots are for Faculty/Guests only)");
+      }
     }
   }
-
-  await ensureServiceOpen("online");
 
   ensureSameDayBooking(slot.date);
 
-  const peakWindowMins = await getPolicyNumber(
-    POLICY_KEYS.peakBookingWindow,
-    null,
-  );
-  const slotDateTime = parseSlotDateTime(slot);
-  if (slotDateTime && new Date() >= slotDateTime) {
-    throw ApiError.badRequest("Cannot book a past time slot");
-  }
 
-  if (slotDateTime && peakWindowMins && peakWindowMins > 0) {
-    const windowStart = new Date(
-      slotDateTime.getTime() - peakWindowMins * 60000,
-    );
-    if (new Date() < windowStart) {
-      throw ApiError.badRequest(
-        `Bookings open ${peakWindowMins} minutes before slot time`,
-      );
-    }
-  }
 
   const maxBookingsPerDay = await getPolicyNumber(
     POLICY_KEYS.maxBookingsPerDay,
@@ -416,11 +399,13 @@ const createBooking = async (userId, data) => {
       cancelledAt: { $gte: cutoff },
     }).select("_id");
 
+    /* 
     if (recentNoShow) {
       throw ApiError.forbidden(
         `Booking blocked for ${noShowPenaltyDays} days due to no-show`,
       );
     }
+    */
   }
 
   // Check for existing booking for same slot
@@ -582,14 +567,14 @@ const getBookingStats = async (date, canteenId) => {
 
   // Build match stage - lookup slot if canteenId filter is provided
   const pipeline = [];
-  
+
   // Match by date
   pipeline.push({
     $match: {
       createdAt: { $gte: start, $lte: end },
     },
   });
-  
+
   // If canteenId is provided, lookup slot and filter by canteenId
   if (canteenId) {
     pipeline.push(
@@ -609,23 +594,27 @@ const getBookingStats = async (date, canteenId) => {
       }
     );
   }
-  
+
   // Group by status
   pipeline.push({
     $group: {
       _id: "$status",
       count: { $sum: 1 },
       totalAmount: { $sum: "$totalAmount" },
+      walkinCount: {
+        $sum: { $cond: [{ $eq: ["$isWalkin", true] }, 1, 0] }
+      }
     },
   });
 
   const stats = await Booking.aggregate(pipeline);
 
   const totalBookings = stats.reduce((acc, s) => acc + s.count, 0);
+  const walkinCount = stats.reduce((acc, s) => acc + (s.walkinCount || 0), 0);
   const totalRevenue = stats
     .filter((s) => s._id === "completed")
     .reduce((acc, s) => acc + s.totalAmount, 0);
-  
+
   // Extract individual status counts for frontend compatibility
   const confirmed = stats.find(s => s._id === 'confirmed')?.count || 0;
   const completed = stats.find(s => s._id === 'completed')?.count || 0;
@@ -637,6 +626,7 @@ const getBookingStats = async (date, canteenId) => {
     total: totalBookings,
     totalBookings,
     totalRevenue,
+    walkinCount,
     confirmed,
     completed,
     cancelled,
