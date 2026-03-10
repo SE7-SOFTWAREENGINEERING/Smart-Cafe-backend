@@ -21,7 +21,10 @@ Node.js/Express.js backend API for the Smart Cafe application.
 - ✅ Slot-based booking system
 - ✅ Dashboard APIs for each role
 - ✅ System settings management
-- ✅ Comprehensive test suite
+- ✅ Comprehensive Jest test suite
+- ✅ **Continuous Integration (GitHub Actions)**: Automated testing suite on every push and pull request with embedded MongoDB service.
+- ✅ **Optimized Containerization (Docker)**: Multi-stage, production-ready `Dockerfile` optimized for speed and cold-start performance.
+- ✅ **Clean Codebase**: Fully standardized UTF-8 configuration files (such as `.gitignore`), guaranteeing no ghost-tracked `node_modules`.
 
 ## User Roles
 
