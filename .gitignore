@@ -1,6 +1,5 @@
 node_modules/
 dist/
+build/
 .env
 *.log
-mongo_data/
-mongo_data_fresh/
