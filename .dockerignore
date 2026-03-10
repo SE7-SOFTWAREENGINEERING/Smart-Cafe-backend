@@ -1,0 +1,14 @@
+node_modules
+.git
+.env
+Dockerfile
+.github
+npm-debug.log
+mongo_data
+mongo_data_fresh
+backups
+test_output.txt
+verify_settings.js
+check_db.js
+db_check_results.txt
+assign_data.js
